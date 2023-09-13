@@ -1,0 +1,44 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/03/a/Register.hdl
+
+/**
+ * 16-bit register:
+ * If load[t] == 1 then out[t+1] = in[t]
+ * else out does not change
+ */
+
+CHIP Register {
+    IN in[16], load;
+    OUT out[16];
+
+    PARTS:
+    // Put your code here:
+    Mux16(a[0]=prev0, a[1]=prev1,  a[2]=prev2, a[3]=prev3,
+          a[4]=prev4, a[5]=prev5, a[6]=prev6, a[7]=prev7,
+          a[8]=prev8, a[9]=prev9, a[10]=prev10, a[11]=prev11,
+          a[12]=prev12, a[13]=prev13, a[14]=prev14, a[15]=prev15,
+          b=in, sel=load, 
+          out[0]=next0, out[1]=next1, out[2]=next2, out[3]=next3,
+          out[4]=next4, out[5]=next5, out[6]=next6, out[7]=next7,
+          out[8]=next8, out[9]=next9, out[10]=next10, out[11]=next11,
+          out[12]=next12, out[13]=next13, out[14]=next14, out[15]=next15);
+    DFF(in=next0, out=out[0], out=prev0);
+    DFF(in=next1, out=out[1], out=prev1);
+    DFF(in=next2, out=out[2], out=prev2);
+    DFF(in=next3, out=out[3], out=prev3);
+    DFF(in=next4, out=out[4], out=prev4);
+    DFF(in=next5, out=out[5], out=prev5);
+    DFF(in=next6, out=out[6], out=prev6);
+    DFF(in=next7, out=out[7], out=prev7);
+    DFF(in=next8, out=out[8], out=prev8);
+    DFF(in=next9, out=out[9], out=prev9);
+    DFF(in=next10, out=out[10], out=prev10);
+    DFF(in=next11, out=out[11], out=prev11);
+    DFF(in=next12, out=out[12], out=prev12);
+    DFF(in=next13, out=out[13], out=prev13);
+    DFF(in=next14, out=out[14], out=prev14);
+    DFF(in=next15, out=out[15], out=prev15);
+    
+}
