@@ -13,19 +13,15 @@ AM=M+1
 A=A-1
 M=D
 // eq 
+@END_CMP_1
+D=A
+@R14
+M=D
 @SP
 AM=M-1
 D=M
 A=A-1
 D=M-D
-@R13
-M=D
-@END_CMP_1
-D=A
-@R14
-M=D
-@R13
-D=M
 @PUSH_TRUE
 D; JEQ
 @PUSH_FALSE
@@ -46,19 +42,15 @@ AM=M+1
 A=A-1
 M=D
 // eq 
+@END_CMP_2
+D=A
+@R14
+M=D
 @SP
 AM=M-1
 D=M
 A=A-1
 D=M-D
-@R13
-M=D
-@END_CMP_2
-D=A
-@R14
-M=D
-@R13
-D=M
 @PUSH_TRUE
 D; JEQ
 @PUSH_FALSE
@@ -79,19 +71,15 @@ AM=M+1
 A=A-1
 M=D
 // eq 
+@END_CMP_3
+D=A
+@R14
+M=D
 @SP
 AM=M-1
 D=M
 A=A-1
 D=M-D
-@R13
-M=D
-@END_CMP_3
-D=A
-@R14
-M=D
-@R13
-D=M
 @PUSH_TRUE
 D; JEQ
 @PUSH_FALSE
@@ -112,19 +100,15 @@ AM=M+1
 A=A-1
 M=D
 // lt 
+@END_CMP_4
+D=A
+@R14
+M=D
 @SP
 AM=M-1
 D=M
 A=A-1
 D=M-D
-@R13
-M=D
-@END_CMP_4
-D=A
-@R14
-M=D
-@R13
-D=M
 @PUSH_TRUE
 D; JLT
 @PUSH_FALSE
@@ -145,19 +129,15 @@ AM=M+1
 A=A-1
 M=D
 // lt 
+@END_CMP_5
+D=A
+@R14
+M=D
 @SP
 AM=M-1
 D=M
 A=A-1
 D=M-D
-@R13
-M=D
-@END_CMP_5
-D=A
-@R14
-M=D
-@R13
-D=M
 @PUSH_TRUE
 D; JLT
 @PUSH_FALSE
@@ -178,19 +158,15 @@ AM=M+1
 A=A-1
 M=D
 // lt 
+@END_CMP_6
+D=A
+@R14
+M=D
 @SP
 AM=M-1
 D=M
 A=A-1
 D=M-D
-@R13
-M=D
-@END_CMP_6
-D=A
-@R14
-M=D
-@R13
-D=M
 @PUSH_TRUE
 D; JLT
 @PUSH_FALSE
@@ -211,19 +187,15 @@ AM=M+1
 A=A-1
 M=D
 // gt 
+@END_CMP_7
+D=A
+@R14
+M=D
 @SP
 AM=M-1
 D=M
 A=A-1
 D=M-D
-@R13
-M=D
-@END_CMP_7
-D=A
-@R14
-M=D
-@R13
-D=M
 @PUSH_TRUE
 D; JGT
 @PUSH_FALSE
@@ -244,19 +216,15 @@ AM=M+1
 A=A-1
 M=D
 // gt 
+@END_CMP_8
+D=A
+@R14
+M=D
 @SP
 AM=M-1
 D=M
 A=A-1
 D=M-D
-@R13
-M=D
-@END_CMP_8
-D=A
-@R14
-M=D
-@R13
-D=M
 @PUSH_TRUE
 D; JGT
 @PUSH_FALSE
@@ -277,19 +245,15 @@ AM=M+1
 A=A-1
 M=D
 // gt 
+@END_CMP_9
+D=A
+@R14
+M=D
 @SP
 AM=M-1
 D=M
 A=A-1
 D=M-D
-@R13
-M=D
-@END_CMP_9
-D=A
-@R14
-M=D
-@R13
-D=M
 @PUSH_TRUE
 D; JGT
 @PUSH_FALSE

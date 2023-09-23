@@ -1,4 +1,3 @@
-# import re
 from typing import Iterator
 from enum import Enum
 from pathlib import PurePath
@@ -81,12 +80,13 @@ class ASMWriter():
             self.writeMemoryAccess()
         
     def dump(self):
-        self.writePush()
+        # Only write helper function when at least one compare is executed
+        if self.count_compare > 0:
+            self.writeHelperFunction()
         with open(self.filepath, 'w') as ASMFile:
             ASMFile.writelines(self.code)
             self.code.clear()
             self.count_compare = 0
-
 
     def addCode(self, code):
         self.code += code + "\n"
@@ -96,7 +96,6 @@ class ASMWriter():
 
     def writeArithmethicLogical(self):
         ops = self.command.operation
-
         if ops in ASMWriter.unary_operator:
             # Take the top element on stack
             self.addCode("@SP")
@@ -105,6 +104,35 @@ class ASMWriter():
                 self.addCode("M=-M")
             elif ops == "not":
                 self.addCode("M=!M")
+        elif ops in self.compare_operator:
+            self.count_compare += 1
+            # Save the specific end label 
+            self.addCode(f"@END_CMP_{self.count_compare}")
+            self.addCode("D=A")
+            self.addCode("@R14")
+            self.addCode("M=D")
+            # Calculate the difference between 2 top most values and decrement the stack pointer
+            self.addCode("@SP")
+            self.addCode("AM=M-1")
+            self.addCode("D=M")
+            self.addCode("A=A-1")
+            self.addCode("D=M-D")
+            if ops == "lt":
+                self.addCode("@PUSH_TRUE")
+                self.addCode("D; JLT")
+                self.addCode("@PUSH_FALSE")
+                self.addCode("D; JGE")
+            elif ops == "gt":
+                self.addCode("@PUSH_TRUE")
+                self.addCode("D; JGT")
+                self.addCode("@PUSH_FALSE")
+                self.addCode("D; JLE")
+            elif ops == "eq":
+                self.addCode("@PUSH_TRUE")
+                self.addCode("D; JEQ")
+                self.addCode("@PUSH_FALSE")
+                self.addCode("D; JNE")
+            self.addCode(f"(END_CMP_{self.count_compare})")
         else:
             # Take the top element on stack
             self.addCode("@SP")
@@ -119,33 +147,8 @@ class ASMWriter():
                 self.addCode("M=D&M")
             elif ops == "or":
                 self.addCode("M=D|M")
-            elif ops in self.compare_operator:
-                self.count_compare += 1
-                self.addCode("D=M-D")
-                self.addCode("@R13")
-                self.addCode("M=D")
-                self.addCode(f"@END_CMP_{self.count_compare}")
-                self.addCode("D=A")
-                self.addCode("@R14")
-                self.addCode("M=D")
-                self.addCode("@R13")
-                self.addCode("D=M")
-                self.addCode("@PUSH_TRUE")
-                if ops == "lt":
-                    self.addCode("D; JLT")
-                    self.addCode("@PUSH_FALSE")
-                    self.addCode("D; JGE")
-                elif ops == "gt":
-                    self.addCode("D; JGT")
-                    self.addCode("@PUSH_FALSE")
-                    self.addCode("D; JLE")
-                elif ops == "eq":
-                    self.addCode("D; JEQ")
-                    self.addCode("@PUSH_FALSE")
-                    self.addCode("D; JNE")
-                self.addCode(f"(END_CMP_{self.count_compare})")
                 
-    def writePush(self):
+    def writeHelperFunction(self):
         self.addCode("@END_PROG")
         self.addCode("0; JMP")
         self.addCode("(PUSH_FALSE)")
@@ -169,86 +172,89 @@ class ASMWriter():
             if self.command.mem_seg == "constant":
                 self.addCode(f"@{self.command.position}")
                 self.addCode("D=A")
+                # Optimize: increase stack pointer and assign push value to it at the same time
                 self.addCode("@SP")
-                self.addCode("A=M")
+                self.addCode("AM=M+1")
+                self.addCode("A=A-1")
                 self.addCode("M=D")
-                self.addCode("@SP")
-                self.addCode("M=M+1")
             elif self.command.mem_seg == "temp":
                 self.addCode(f"@{5+self.command.position}")
                 self.addCode("D=M")
+                # Optimize: increase stack pointer and assign push value to it at the same time
                 self.addCode("@SP")
-                self.addCode("A=M")
+                self.addCode("AM=M+1")
+                self.addCode("A=A-1")
                 self.addCode("M=D")
-                self.addCode("@SP")
-                self.addCode("M=M+1")
             elif self.command.mem_seg == "static":
                 self.addCode(f"@{self.module_name}.{self.command.position}")
                 self.addCode("D=M")
+                # Optimize: increase stack pointer and assign push value to it at the same time
                 self.addCode("@SP")
-                self.addCode("A=M")
-                self.addCode("M=D")
-                self.addCode("@SP")
-                self.addCode("M=M+1")    
+                self.addCode("AM=M+1")
+                self.addCode("A=A-1")
+                self.addCode("M=D") 
             elif self.command.mem_seg == "pointer":
                 if self.command.position == 0:
                     self.addCode("@THIS")
                 elif self.command.position == 1:
                     self.addCode("@THAT")
                 self.addCode("D=M")
+                # Optimize: increase stack pointer and assign push value to it at the same time
                 self.addCode("@SP")
-                self.addCode("A=M")
-                self.addCode("M=D")
-                self.addCode("@SP")
-                self.addCode("M=M+1")            
+                self.addCode("AM=M+1")
+                self.addCode("A=A-1")
+                self.addCode("M=D")         
             elif self.command.mem_seg in self.simple_segment:
                 self.addCode(f"@{self.command.position}")
                 self.addCode("D=A")
                 self.addCode(f"@{self.simple_segment[self.command.mem_seg]}")
                 self.addCode("A=D+M")
                 self.addCode("D=M")
+                # Optimize: increase stack pointer and assign push value to it at the same time
                 self.addCode("@SP")
-                self.addCode("A=M")
+                self.addCode("AM=M+1")
+                self.addCode("A=A-1")
                 self.addCode("M=D")
-                self.addCode("@SP")
-                self.addCode("M=M+1")
         elif self.command.operation == "pop":
             if self.command.mem_seg in self.simple_segment:
-                self.addCode("@SP")
-                self.addCode("M=M-1")
                 self.addCode(f"@{self.command.position}")
                 self.addCode("D=A")
                 self.addCode(f"@{self.simple_segment[self.command.mem_seg]}")
                 self.addCode("D=D+M")
-                self.addCode("@R13")
-                self.addCode("M=D")
+                # self.addCode("@R13")
+                # self.addCode("M=D")
+                # Optimize: update the stack pointer and get the value of it at the same time
+                # Reduce 2 lines of code
                 self.addCode("@SP")
-                self.addCode("A=M")
-                self.addCode("D=M")
-                self.addCode("@R13")
-                self.addCode("A=M")
-                self.addCode("M=D")
+                self.addCode("AM=M-1")
+                # self.addCode("@R13")
+                # self.addCode("A=M")
+                # Optimize: using swapping in place to avoid of using temporary memory to store pop memory
+                # Reduce 3 lines of code
+                self.addCode("D=D+M")
+                self.addCode("A=D-M")
+                self.addCode("M=D-A")
             elif self.command.mem_seg == "temp":
+                # Optimize: update the stack pointer and get the value of it at the same time
+                # Reduce 2 lines of code
                 self.addCode("@SP")
-                self.addCode("M=M-1")
-                self.addCode("@SP")
-                self.addCode("A=M")
+                self.addCode("AM=M-1")
                 self.addCode("D=M")
                 self.addCode(f"@{5+self.command.position}")
                 self.addCode("M=D")
             elif self.command.mem_seg == "static":
+                # Optimize: update the stack pointer and get the value of it at the same time
+                # Reduce 2 lines of code
                 self.addCode("@SP")
-                self.addCode("M=M-1")
-                self.addCode("@SP")
-                self.addCode("A=M")
+                self.addCode("AM=M-1")
                 self.addCode("D=M")
                 self.addCode(f"@{self.module_name}.{self.command.position}")
                 self.addCode("M=D")
             elif self.command.mem_seg == "pointer":
+                # Optimize: update the stack pointer and get the value of it at the same time
+                # Reduce 2 lines of code
                 self.addCode("@SP")
-                self.addCode("M=M-1")
-                self.addCode("@SP")
-                self.addCode("A=M")
+                self.addCode("AM=M-1")
                 self.addCode("D=M")
                 if self.command.position == 0:
                     self.addCode("@THIS")
@@ -272,10 +278,6 @@ class VMTranslator():
         self.coder.dump()
 
 if __name__ == "__main__":
-    # translator = VMTranslator('StackArithmetic\SimpleAdd\SimpleAdd.vm')
-    # translator = VMTranslator('MemoryAccess\BasicTest\BasicTest.vm')
-    # translator = VMTranslator('MemoryAccess\StaticTest\StaticTest.vm')
-    # translator = VMTranslator('MemoryAccess\PointerTest\PointerTest.vm')
     filepath = sys.argv[1] 
     translator = VMTranslator(filepath)
     translator.convert()    
