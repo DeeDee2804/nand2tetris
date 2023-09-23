@@ -1,0 +1,17 @@
+@END_PROG
+0; JMP
+(PUSH_FALSE)
+@SP
+A=M-1
+M=0
+@R14
+A=M
+0; JMP
+(PUSH_TRUE)
+@SP
+A=M-1
+M=-1
+@R14
+A=M
+0; JMP
+(END_PROG)
