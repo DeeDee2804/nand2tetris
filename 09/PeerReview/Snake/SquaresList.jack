@@ -1,0 +1,98 @@
+/**
+ * An ADT implementation for a dynamically-growing list of squares.
+ */
+class SquaresList {
+  field int m_capacity;
+  field int m_size;
+  field Array m_squares;
+
+  /**
+   * Create a new list with an initial capacity.
+   *
+   * @param initialCapacity - the initial capacity
+   *
+   * @return the new list
+   */
+  constructor SquaresList new(int initialCapacity) {
+    let m_capacity = initialCapacity;
+    let m_size = 0;
+    let m_squares = Array.new(initialCapacity);
+    return this;
+  }
+
+  /**
+   * Get the number of squares already added to the list.
+   *
+   * @return the list size (number of elements)
+   */
+  method int size() {
+    return m_size;
+  }
+
+  /**
+   * Get the square at the specified index in the list.
+   *
+   * @param index - the square's index in the list
+   *
+   * @return the square
+   */
+  method Square get(int index) {
+    return m_squares[index];
+  }
+
+  /**
+   * Add a square to the end of the list.
+   *
+   * Dynamically grows the list if the number of elements would exceed the capacity.
+   *
+   * @param square - the square to add
+   */
+  method void add(Square square) {
+    if (m_capacity = m_size) {
+      let m_squares = grow_priv();
+    }
+    let m_squares[m_size] = square;
+    let m_size = m_size + 1;
+    return;
+  }
+
+  /**
+   * Get the last square in the list.
+   *
+   * @return the last square
+   */
+  method Square last() {
+    return m_squares[m_size - 1];
+  }
+
+  /**
+   * Free the memory allocated for this list.
+   */
+  method void dispose() {
+    do m_squares.dispose();
+    do Memory.deAlloc(this);
+    return;
+  }
+
+  /* Private Methods (DO NOT CALL FROM OUTSIDE) */
+
+  method Array grow_priv() {
+    var Array newSquares;
+    var int i;
+
+    let m_capacity = 2 * m_size;
+    let newSquares = Array.new(m_capacity);
+
+    // copy the squares from the old array
+    let i = 0;
+    while (i < m_size) {
+      let newSquares[i] = m_squares[i];
+      let i = i + 1;
+    }
+
+    // free the old squares array
+    do m_squares.dispose();
+
+    return newSquares;
+  }
+}

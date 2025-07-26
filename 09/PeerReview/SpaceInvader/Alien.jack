@@ -1,0 +1,214 @@
+class Alien {
+
+	field int location, oneOr2;
+	field boolean alive;
+
+	constructor Alien new(int plocation){		// create new alien starting in the given location
+		let location = plocation;
+		let oneOr2 = 1;
+		let alive = true;
+		return this;
+	}
+	
+	method void dispose(){
+		do Memory.deAlloc(this);
+		return;
+	}
+	
+	method int whereRU(){
+		return location ;
+	}
+	
+	method void show() {
+		if (alive) {
+			if (oneOr2 = 1) {
+				do draw1(location);		// arms down
+				let oneOr2 = 2;
+			}
+			else {
+				do draw2(location);		// arms up
+				let oneOr2 = 1;
+			}
+		}
+		return;
+	}
+	
+	method void die(){
+		do drawExplosion(location);
+		let alive = false;
+		return;
+	}
+	
+	
+	method boolean isAlive(){
+		return alive;
+	}
+	
+	
+	method void erase() {		// erase alien
+		var int loc, i;
+		
+		let loc = location + 16384;
+		let i = 0;
+		while (i < 19) {
+			do Memory.poke(loc + (i * 32), 0);		// column 1
+			do Memory.poke(loc + 1 + (i * 32), 0);	// column 2
+			let i = i + 1;
+		}
+		return;
+	}
+	
+	method void moveLeft(){
+		var int i;
+		do erase();			// erase existing
+		let location = location - 1;
+		let i = show();
+		return;
+	}	
+	
+	method void moveRight(){
+		var int i;
+		do erase();			// erase existing
+		let location = location + 1;
+		let i = show();
+		return;
+	}	
+	
+	method int moveDown(){
+		var int i;
+		
+		if (location > 6911) {
+			return 1;				// aliens have landed - game over
+		}
+		do erase();			// erase existing
+		let location = location + 64;
+		let i = show();
+		return 0;
+	}	
+	
+	method void pokey(int address, int data){			// this method ors in the alien image so we don't overwrite missed missiles.
+		var int z;
+		
+		let z = (Memory.peek(address) | data);
+		do Memory.poke(address, z);
+		return;
+	}
+		
+	
+	method void draw1(int location) {		// draw alien with arms down, feet in
+		var int memAddress; 
+		let memAddress = 16384+location;
+		// column 0
+		do pokey(memAddress, 768);
+		do pokey(memAddress +32, 1536);
+		do pokey(memAddress +64, 3072);
+		do pokey(memAddress +96, 3072);
+		do pokey(memAddress +128, -256);
+		do pokey(memAddress +160, -128);
+		do pokey(memAddress +192, -3136);
+		do pokey(memAddress +224, -3104);
+		do pokey(memAddress +256, -16);
+		do pokey(memAddress +288, -16);
+		do pokey(memAddress +320, -144);
+		do pokey(memAddress +352, -208);
+		do pokey(memAddress +384, 816);
+		do pokey(memAddress +416, 1840);
+		do pokey(memAddress +448, 7680);
+		do pokey(memAddress +480, -17408);
+		// column 1
+		do pokey(memAddress +1, 48);
+		do pokey(memAddress +33, 24);
+		do pokey(memAddress +65, 12);
+		do pokey(memAddress +97, 12);
+		do pokey(memAddress +129, 63);
+		do pokey(memAddress +161, 127);
+		do pokey(memAddress +193, 243);
+		do pokey(memAddress +225, 499);
+		do pokey(memAddress +257, 1023);
+		do pokey(memAddress +289, 1023);
+		do pokey(memAddress +321, 959);
+		do pokey(memAddress +353, 831);
+		do pokey(memAddress +385, 816);
+		do pokey(memAddress +417, 796);
+		do pokey(memAddress +449, 15);
+		do pokey(memAddress +481, 7);
+		return;
+	}	
+		
+	method void draw2(int location) {		// draw alien with arms up, feet out
+		var int memAddress; 
+		let memAddress = 16384+location;
+		// column 0
+		do pokey(memAddress, 768);
+		do pokey(memAddress +32, 1536);
+		do pokey(memAddress +64, 3120);
+		do pokey(memAddress +96, 3120);
+		do pokey(memAddress +128, -208);
+		do pokey(memAddress +160, -80);
+		do pokey(memAddress +192, -3088);
+		do pokey(memAddress +224, -3088);
+		do pokey(memAddress +256, -32);
+		do pokey(memAddress +288, -64);
+		do pokey(memAddress +320, 7936);
+		do pokey(memAddress +352, -256);
+		do pokey(memAddress +384, -7424);
+		do pokey(memAddress +416, 896);
+		do pokey(memAddress +448, 480);
+		do pokey(memAddress +480, 240);
+		// column 1
+		do pokey(memAddress +1, 48);
+		do pokey(memAddress +33, 24);
+		do pokey(memAddress +65, 780);
+		do pokey(memAddress +97, 780);
+		do pokey(memAddress +129, 831);
+		do pokey(memAddress +161, 895);
+		do pokey(memAddress +193, 1011);
+		do pokey(memAddress +225, 1011);
+		do pokey(memAddress +257, 511);
+		do pokey(memAddress +289, 255);
+		do pokey(memAddress +321, 62);
+		do pokey(memAddress +353, 63);
+		do pokey(memAddress +385, 49);
+		do pokey(memAddress +417, 224);
+		do pokey(memAddress +449, 960);
+		do pokey(memAddress +481, 1920);
+		return;
+	}
+	
+	method void drawExplosion(int location) {				// draw explosion
+		var int memAddress; 
+		let memAddress = 16384+location;
+		// column 0
+		do Memory.poke(memAddress, 25184);
+		do Memory.poke(memAddress +32, 28272);
+		do Memory.poke(memAddress +96, -14748);
+		do Memory.poke(memAddress +128, -31694);
+		do Memory.poke(memAddress +160, 12690);
+		do Memory.poke(memAddress +192, -25792);
+		do Memory.poke(memAddress +224, 1667);
+		do Memory.poke(memAddress +256, 3627);
+		do Memory.poke(memAddress +288, 12768);
+		do Memory.poke(memAddress +320, 5388);
+		do Memory.poke(memAddress +352, -16180);
+		do Memory.poke(memAddress +384, 512);
+		do Memory.poke(memAddress +416, 3632);
+		do Memory.poke(memAddress +448, -15748);
+		do Memory.poke(memAddress +480, 2096);
+		// column 1
+		do Memory.poke(memAddress +33, 7);
+		do Memory.poke(memAddress +65, 4);
+		do Memory.poke(memAddress +97, 1);
+		do Memory.poke(memAddress +129, 1);
+		do Memory.poke(memAddress +161, 8);
+		do Memory.poke(memAddress +193, 97);
+		do Memory.poke(memAddress +225, 115);
+		do Memory.poke(memAddress +257, 2);
+		do Memory.poke(memAddress +321, 30);
+		do Memory.poke(memAddress +353, 8);
+		do Memory.poke(memAddress +385, 8);
+		do Memory.poke(memAddress +417, 1);
+		do Memory.poke(memAddress +449, 1);
+		do Memory.poke(memAddress +481, 1);
+		return;
+	}
+}

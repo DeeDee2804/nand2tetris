@@ -1,0 +1,70 @@
+/**
+ * A pseudo-random number generator for HACK screen coordinates.
+ *
+ * It is based on the Linear Congruential Generator (LCG) algorithm.
+ * The parameters were chosen according to the Hull-Dobell theorem.
+ */
+class ScreenRand {
+  field int m_seedX;
+  field int m_seedY;
+
+  /**
+   * Create a new pseudo-random number generator.
+   *
+   * @param seedX - the initial seed for the x coordinate
+   * @param seedY - the initial seed for the y coordinate
+   *
+   * @return the new screen coordinate PRNG
+   */
+  constructor ScreenRand new(int seedX, int seedY) {
+    let m_seedX = seedX;
+    let m_seedY = seedY;
+    return this;
+  }
+
+  /**
+   * Get a random HACK screen x coordinate.
+   *
+   * @return the random x coordinate
+   */
+  method int randX() {
+    var int a, c, m;
+    let a = 221;
+    let c = 1;
+    let m = 512;
+
+    let m_seedX = MathUtils.mod(
+      (MathUtils.mod(a, m) * MathUtils.mod(m_seedX, m)) + c,
+      m
+    );
+
+    return m_seedX;
+  }
+
+  /**
+   * Get a random HACK screen y coordinate.
+   *
+   * @return the random y coordinate
+   */
+  method int randY() {
+    var int a, c, m;
+    let a = 109;
+    let c = 41;
+    let m = 256;
+
+    let m_seedY = MathUtils.mod(
+      (MathUtils.mod(a, m) * MathUtils.mod(m_seedY, m)) + c,
+      m
+    );
+
+    return m_seedY;
+  }
+
+  /**
+   * Free the memory allocated for this PRNG.
+   */
+  method void dispose() {
+    do Memory.deAlloc(this);
+    return;
+  }
+}

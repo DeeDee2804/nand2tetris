@@ -1,0 +1,121 @@
+/**
+ * Represents a square on the screen.
+ */
+class Square {
+  field int m_x, m_y;
+  field int m_size;
+
+  /**
+   * Create a new square.
+   *
+   * @param x - the x coordinate of the top-left corner
+   * @param y - the y coordinate of the top-left corner
+   * @param size - the size in pixels
+   *
+   * @return the new square
+   */
+  constructor Square new(int x, int y, int size) {
+    let m_x = x;
+    let m_y = y;
+    let m_size = size;
+    return this;
+  }
+
+  /**
+   * Get the x coordinate of the top-left corner.
+   *
+   * @return the top-left x coordinate
+   */
+  method int x() {
+    return m_x;
+  }
+
+  /**
+   * Set the x coordinate of the top-left corner.
+   *
+   * @param x - the new top-left x coordinate
+   */
+  method void setX(int x) {
+    let m_x = x;
+    return;
+  }
+
+  /**
+   * Get the y coordinate of the top-left corner.
+   *
+   * @return the top-left y coordinate
+   */
+  method int y() {
+    return m_y;
+  }
+
+  /**
+   * Set the y coordinate of the top-left corner.
+   *
+   * @param y - the new top-left y coordinate
+   */
+  method void setY(int y) {
+    let m_y = y;
+    return;
+  }
+
+  /**
+   * Get the square size in pixels.
+   *
+   * @return the square size
+   */
+  method int size() {
+    return m_size;
+  }
+
+  /**
+   * Get the x coordinate of the right side.
+   *
+   * @return the right x of the square
+   */
+  method int right() {
+    return m_x + m_size;
+  }
+
+  /**
+   * Get the y coordinate of the bottom side.
+   *
+   * @return the bottom y of the square
+   */
+  method int bottom() {
+    return m_y + m_size;
+  }
+
+  /**
+   * Check if this square intersects another one.
+   *
+   * @param other - the other square
+   *
+   * @return true if the two squares intersect, false otherwise
+   */
+  method boolean intersects(Square other) {
+    if ((right() < other.x()) | (right() = other.x())) {
+      return false;
+    }
+    if ((other.right() < m_x) | (other.right() = m_x)) {
+      return false;
+    }
+
+    if ((bottom() < other.y()) | (bottom() = other.y())) {
+      return false;
+    }
+    if ((other.bottom() < m_y) | (other.bottom() = m_y)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Free the memory allocated for this square.
+   */
+  method void dispose() {
+    do Memory.deAlloc(this);
+    return;
+  }
+}

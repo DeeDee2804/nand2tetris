@@ -1,0 +1,103 @@
+class Missile {
+
+	field int location;
+	field boolean offScreen;
+	
+	constructor Missile new(int startLocation) {
+		let location = startLocation;
+		let offScreen = false;
+		return this;
+	}
+	
+	method void dispose(){
+		do Memory.deAlloc(this);
+		return;
+	}
+	
+	method int advance() {			// move missile up
+		var int z;
+		
+		if ((location - 384) > 16384) {
+			let z = Memory.peek(location - 384);
+			if ((z & 2) = 2){							// if we have hit a alien;
+				do eraseAll();
+				return 2;
+			}
+		}
+		
+		let z = Memory.peek(location);
+		do Memory.poke(location, z & (~7));				// erase the bottom row of current missile
+		let location = location - 32;
+		do draw();
+		if (offScreen) {
+			return 1;
+		}
+		return 0;
+		
+	}
+
+	
+		
+	method int hitLocation() {							// return the location where there is contact
+		return (location - 384) - 16384;
+	}
+
+	
+		
+	method void eraseAll() {							// erase all the missile
+		var int memAddress; 
+		
+		let memAddress = location;
+	
+		do Memory.poke(memAddress -352, 0);
+		do Memory.poke(memAddress -320, 0);
+		do Memory.poke(memAddress -288, 0);
+		do Memory.poke(memAddress -256, 0);
+		do Memory.poke(memAddress -224, 0);
+		do Memory.poke(memAddress -192, 0);
+		do Memory.poke(memAddress -160, 0);
+		do Memory.poke(memAddress -128, 0);
+		do Memory.poke(memAddress -96, 0);
+		do Memory.poke(memAddress -64, 0);
+		do Memory.poke(memAddress -32, 0);
+		do Memory.poke(memAddress, 0);
+		return;
+	}
+
+	
+	
+	method void pokey(int address, int data)  {		// missile image is or'ed to prevent overwriting aliens	
+		var int z;
+		
+		if (address > 16384){
+			let z = Memory.peek(address);
+			do Memory.poke(address, (data | z));
+			let offScreen = false;
+		}
+		else {
+			let offScreen = true;
+		}
+		return;
+	}
+	
+	
+	method void draw() {						// draw the missile
+		var int memAddress; 
+		let memAddress = location;
+		// column 0
+		do pokey(memAddress -352, 2);
+		do pokey(memAddress -320, 7);
+		do pokey(memAddress -288, 7);
+		do pokey(memAddress -256, 7);
+		do pokey(memAddress -224, 7);
+		do pokey(memAddress -192, 7);
+		do pokey(memAddress -160, 7);
+		do pokey(memAddress -128, 7);
+		do pokey(memAddress -96, 2);
+		do pokey(memAddress -64, 5);
+		do pokey(memAddress -32, 2);
+		do pokey(memAddress, 5);
+		return;
+	}
+
+}

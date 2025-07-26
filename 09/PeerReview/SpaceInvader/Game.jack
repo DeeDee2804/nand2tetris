@@ -1,0 +1,114 @@
+class Game {
+
+	field Aliens aliens;
+	field Defender defender;
+	field int score, over; 
+	field boolean firing;
+	field Missiles missiles;
+	field int missilesLeft;
+	
+	
+	constructor Game new() {
+		let score = 0;
+		let aliens = Aliens.new();
+		do aliens.show();
+		let defender = Defender.new();
+		do defender.show();
+		let firing = false;
+		let missiles = Missiles.new();
+		let missilesLeft = 100;
+ 		return this;
+	}
+	
+	
+	method void dispose(){
+		do aliens.dispose();
+		do defender.dispose();
+		do missiles.dispose();
+		do Memory.deAlloc(this);
+		return;
+	}
+	
+	method void run(){
+		var int z, key, kcount, i;
+     
+		let kcount = 0;
+		while (over = 0) {
+			do Sys.wait(2);
+			let over = aliens.tick();
+			if (over = 1) {
+				do Output.moveCursor(22, 15);
+				do Output.printString("The aliens have landed. Game over.");
+			}
+			let kcount = kcount + 1;
+			if (kcount = 20) {				// slow down defender movement a bit
+				let kcount = 0;
+				let key = Keyboard.keyPressed();
+				if (key = 130){
+					do defender.moveLeft();
+				}
+				if (key = 132){
+					do defender.moveRight();
+				}
+			}
+			let over = over | checkFiring();        // go check if missile firing requested
+			let z = missiles.tick();
+			if (z > 0) {
+				let i = aliens.kill(z);				// blow up alien
+				let score = score + 10;
+				do showScore();
+				if (i = 0) {
+					do Output.moveCursor(22, 15);
+					do Output.printString("All aliens killed. Well done.");
+					let over = 1;
+				}
+				
+			}
+        } 
+	    return;
+	}
+	
+	method int checkFiring(){				// check if missile firing requested
+		var int key, loc;
+		
+		let key = Keyboard.keyPressed();
+		if (key = 131) {			// up arrow = fire
+			let firing = true;
+		}
+		if ((key = 0) & (firing)) {
+			let loc = defender.whereRU();  // find out where the launcher is
+			if (missilesLeft > 0){
+				let missilesLeft = missilesLeft - 1;
+				do showScore();
+				do missiles.fire(loc);
+				let firing = false;
+			}
+			else {
+				do Output.moveCursor(22, 11);
+				do Output.printString("You've run out of missiles. Game over.");
+				return 1;
+			}
+		}
+		return 0;
+	}
+	
+	method void showScore() {
+		var int x;
+		var int y;
+		let x = 0;
+		let y = 235;
+		while (x < 32) {
+			do Memory.poke((y * 32) + x + 16384, - 1);
+			do Memory.poke(((y + 1) * 32) + x + 16384, - 1);
+			let x = x + 1;
+		}
+		do Output.moveCursor(22, 0);
+		do Output.printString("Score: ");
+		do Output.printInt(score);
+		do Output.moveCursor(22, 50);
+		do Output.printString("Missiles:    ");
+		do Output.moveCursor(22, 60);
+		do Output.printInt(missilesLeft);
+		return;
+	}
+}

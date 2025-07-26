@@ -1,0 +1,82 @@
+class Missiles{
+
+		field Array theMissiles;
+		
+		constructor Missiles new() {
+			var int i;
+			
+			let theMissiles = Array.new(30);		// max concurrent missiles. Exaggeration.
+			while (i < 30){
+				let theMissiles[i] = 0;
+				let i = i + 1;
+			}
+			return this;
+		}
+		
+		method void dispose() {
+			var int i;
+			var Missile m;
+			
+			let i = 0;
+			while (i < 30){
+				let m = theMissiles[i];
+				if (~(theMissiles[i] = 0)) {		// active missile
+					do m.dispose();
+				}
+				let i = i + 1;
+			}
+			do Memory.deAlloc(theMissiles);
+			do Memory.deAlloc(this);
+			return;
+		}
+		
+		method int tick(){						// called at interval by Game.jack. Returns location if missile hits alien
+			var int i, mstatus, hl;
+			var Missile m;
+			
+			let i = 0;
+			while (i < 30) {					// service all actice missiles
+				let m = theMissiles[i];
+				if (~(m = 0)) {
+					let mstatus = m.advance();
+					if (mstatus = 1){			// if missile off screen
+						do m.dispose();
+						let theMissiles[i] = 0;	
+					}
+					if (mstatus = 2){			// if missile hit an alien
+						let hl = m.hitLocation(); // where the alien was struct
+						do m.dispose();
+						let theMissiles[i] = 0;	
+						return hl;
+					}
+				}
+				let i = i + 1;
+			}
+			return 0;
+		}
+		
+		method void fire(int location) {				// fire missile
+			var int i;
+			var boolean found;
+			var Missile m;
+			
+			let found = false;
+			let i = 0;
+			while ((i < 30) & (~found)) {				//look for an empty slot in the missile array
+				if	(theMissiles[i] = 0) {
+					let found = true;
+				} 
+				else {
+					let i = i + 1;
+				}
+			}
+			if (found) {
+				let m = Missile.new(location);			// create new missile
+				let theMissiles[i] = m;
+				do m.draw();							// and draw it
+			}
+			
+			
+			return;
+		}
+}

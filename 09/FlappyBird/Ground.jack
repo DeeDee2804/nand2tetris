@@ -1,0 +1,88 @@
+class Ground {
+    field bool state;
+
+    constructor Ground new() {
+        let state = true;
+        return this;
+    }
+
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+
+    method int getRow() {
+        // row 175
+        return 175;
+    }
+
+    method void draw() {
+        var int column, row;
+        var int memAddr;
+        
+        let column = 0;
+        while (column < 32) {
+            let memAddr = 22784;
+            do Memory.poke(memAddr + column, -1);
+            let column = column + 1;
+        }
+
+        let column = 0;
+        while (column < 32) {
+            let memAddr = 23136;
+            do Memory.poke(memAddr + column, -1);
+            let column = column + 1;
+        }
+
+        let row = 0;
+        if (state) {
+            let memAddr = 22816;
+            while (row < 5) {
+                let column = 0;
+                while (column < 32) {
+                    do Memory.poke(memAddr + column, -21846);
+                    let column = column + 1;
+                }
+                let row = row + 1;
+                let memAddr = memAddr + 64;
+            }
+
+            let memAddr = 22848;
+            while (row < 5) {
+                let column = 0;
+                while (column < 32) {
+                    do Memory.poke(memAddr + column, 21845);
+                    let column = column + 1;
+                }
+                let row = row + 1;
+                let memAddr = memAddr + 64;
+            }
+        } else {
+            let memAddr = 22816;
+            while (row < 5) {
+                let column = 0;
+                while (column < 32) {
+                    do Memory.poke(memAddr + column, 21845);
+                    let column = column + 1;
+                }
+                let row = row + 1;
+                let memAddr = memAddr + 64;
+            }
+
+            let memAddr = 22848;
+            while (row < 5) {
+                let column = 0;
+                while (column < 32) {
+                    do Memory.poke(memAddr + column, -21846);
+                    let column = column + 1;
+                }
+                let row = row + 1;
+                let memAddr = memAddr + 64; 
+            }
+        }
+        let state = ~state;
+        return;
+    }
+
+    
+}

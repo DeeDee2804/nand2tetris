@@ -1,0 +1,167 @@
+class Game {
+    field Ground ground;
+    field Random random;
+    field Bird bird;
+    field int time;
+    field Score score;
+    field Array pipes;
+    field int idxPipe;
+    field int numPipes;
+    field bool ended;
+    field bool started;
+
+    constructor Game new() {
+        do Random.setSeed(12345);
+        let bird = Bird.new();
+        let ground = Ground.new();
+        let pipes = Array.new(5);
+        let time = 0;
+        let score = Score.new();
+        let numPipes = 0;
+        let started = false;
+        let ended = false;
+        do bird.drawNormal();
+        return this;
+    }
+
+    // add a new pipe to the game if not full
+    // pipes are stored in an array, max 5 pipes at a time
+    // pipes are added from the right side of the screen
+    // and move to the left
+    method void addPipe() {
+        if (numPipes < 5) {
+            let pipes[numPipes] = Pipe.new();
+            let numPipes = numPipes + 1;  
+        }
+        return;
+    }
+
+    // reset all the pipes
+    method void resetPipes() {
+        var int i;
+        var Pipe pipe;
+        let i = 0;
+        while (i < numPipes) {
+            let pipe = pipes[i];
+            do pipe.erase();
+            do pipe.dispose();
+            let pipes[i] = null;
+            let i = i + 1;
+        }
+        let idxPipe = 0;
+        let numPipes = 0;
+        return;
+    }
+    // move all the pipes
+    method void movePipes() {
+        var int i;
+        var Pipe pipe;
+        let i = 0;
+        while (i < numPipes) {
+            let pipe = pipes[i];
+            do pipe.move();
+            let i = i + 1;
+        }
+        return;
+    }
+
+    method bool collision() {
+        var int i;
+        var Pipe pipe;
+        // Check if bird is below the ground
+        if (bird.getRow() > ground.getRow()) {
+            let ended = true;
+            return true;
+        }
+        else {
+            // no pipes yet
+            if (numPipes < 1) {
+                return false;
+            }
+            let pipe = pipes[idxPipe];
+            // bird is in the next pipe
+            if (bird.getCol() > (pipe.getCol() + 16)) {
+                let idxPipe = idxPipe + 1;
+                // if bird pass the end of the pipes, increment score
+                do score.increment();
+                if (idxPipe > (numPipes-1)) {
+                    let idxPipe = 0;    
+                }
+                return false;
+            }
+            // bird is in the column of the pipe
+            if ((bird.getCol() + 32) > pipe.getCol()) {
+                // bird is in the row of the pipe
+                if ((bird.getRow() < pipe.getHeight()) | (bird.getRow() > (pipe.getHeight() + 48))) {
+                    let ended = true;
+                    return true;
+                }
+            }
+            return false;
+        }        
+    }
+
+    method void run() {
+        var char key;  // the key currently pressed by the user
+        var boolean exit;
+        let exit = false;
+
+        while (~exit) {
+            let key = Keyboard.keyPressed();
+            
+            if (~ended) {
+                // Press 'Space' to start the game and flap the bird
+                if (key = 32) {
+                    let started = true;
+                    do bird.flap();
+                }
+                if (started) {
+                    // Calculate the next time new pipe appears
+                    if (time < 52) {
+                        let time = time + 1;
+                    } else {
+                        do addPipe();
+                        let time = 0;
+                    }
+                    // Move the bird and pipes
+                    do bird.move();
+                    do movePipes();
+                    // Check for collision
+                    if (collision())
+                    {
+                        let ended = true;
+                        let started = false;
+                    }
+                }
+                // Move the ground
+                do ground.draw();
+            }
+            else {
+                // Press 'Enter' to restart the game
+                if (key = 128) {
+                    let ended = false;
+                    do resetPipes();
+                    let time = 0;
+                    do score.reset();
+                    do bird.reset();
+                    do bird.drawNormal();
+                }
+            }
+            do score.draw();
+            do Sys.wait(50);
+
+            // Press 'Escape' to exit the game
+            if (key = 140)  { let exit = true; }
+        } // while
+        return;
+   }
+
+   method void dispose() {
+        do bird.dispose();
+        do ground.dispose();
+        do score.dispose();
+        do resetPipes();
+        do Memory.deAlloc(this);
+        return;
+   }
+}

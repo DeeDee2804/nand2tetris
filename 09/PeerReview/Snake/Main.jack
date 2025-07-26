@@ -1,0 +1,17 @@
+/**
+ * The main class of the game.
+ */
+class Main {
+  /**
+   * Application entry point.
+   */
+  function void main() {
+    var SnakeGame snakeGame;
+
+    let snakeGame = SnakeGame.new();
+    do snakeGame.run();
+    do snakeGame.dispose();
+
+    return;
+  }
+}

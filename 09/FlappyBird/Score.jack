@@ -1,0 +1,357 @@
+class Score {
+    // Store the score as two digits
+    // digit0 is the ones place, digit1 is the tens place
+    field int digit0;
+    field int digit1;
+
+    constructor Score new() {
+        let digit0 = 0;
+        let digit1 = 0;
+        return this;
+    }
+
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+
+    method void increment() {
+        let digit0 = digit0 + 1;
+        // if digit0 exceeds 9, increment digit1 and reset digit0
+        if (digit0 > 9) {
+            let digit1 = digit1 + 1;
+            let digit0 = 0;
+        }
+        return;
+    }
+
+    method void drawDigit0() {
+        if (digit0 = 0) {
+            do draw0(1);
+            return;
+        }
+        if (digit0 = 1) {
+            do draw1(1);
+            return;
+        }
+        if (digit0 = 2) {
+            do draw2(1);
+            return;
+        }
+        if (digit0 = 3) {
+            do draw3(1);
+            return;
+        }
+        if (digit0 = 4) {
+            do draw4(1);
+            return;
+        }
+        if (digit0 = 5) {
+            do draw5(1);
+            return;
+        }
+        if (digit0 = 6) {
+            do draw6(1);
+            return;
+        }
+        if (digit0 = 7) {
+            do draw7(1);
+            return;
+        }
+        if (digit0 = 8) {
+            do draw8(1);
+            return;
+        }
+        if (digit0 = 9) {
+            do draw9(1);
+            return;
+        }
+        return;
+    }
+
+    method void drawDigit1() {
+        if (digit1 = 0) {
+            do draw0(0);
+            return;
+        }
+        if (digit1 = 1) {
+            do draw1(0);
+            return;
+        }
+        if (digit1 = 2) {
+            do draw2(0);
+            return;
+        }
+        if (digit1 = 3) {
+            do draw3(0);
+            return;
+        }
+        if (digit1 = 4) {
+            do draw4(0);
+            return;
+        }
+        if (digit1 = 5) {
+            do draw5(0);
+            return;
+        }
+        if (digit1 = 6) {
+            do draw6(0);
+            return;
+        }
+        if (digit1 = 7) {
+            do draw7(0);
+            return;
+        }
+        if (digit1 = 8) {
+            do draw8(0);
+            return;
+        }
+        if (digit1 = 9) {
+            do draw9(0);
+            return;
+        }
+        return;
+    }
+
+    // Draw the score on the screen
+    // The score is displayed as two digits
+    // The first digit is at position 0, the second at position 1
+    // If digit1 is 0, only draw the first digit
+    // If digit1 is not 0, draw both digits
+    method void draw() {
+        if (digit1 > 0) {
+            do drawDigit1();
+            do drawDigit0();
+        } else {
+            do drawDigit0();
+        }
+        return;
+    }
+
+    method void reset() {
+        let digit0 = 0;
+        let digit1 = 0;
+        return;
+    }
+    
+    method void draw0(int position) {
+        var int memAddress;
+        let memAddress = 16719 + position;
+        // Draw digit {i} at memAddress
+        do Memory.poke(memAddress + 0, 2016);    // 0000011111100000
+        do Memory.poke(memAddress + 32, 8184);    // 0001111111111000
+        do Memory.poke(memAddress + 64, 16380);    // 0011111111111100
+        do Memory.poke(memAddress + 96, 32318);    // 0111110001111110
+        do Memory.poke(memAddress + 128, 31774);    // 0111100000111110
+        do Memory.poke(memAddress + 160, -2033);    // 1111000000011111
+        do Memory.poke(memAddress + 192, -2033);    // 1111000000011111
+        do Memory.poke(memAddress + 224, -2033);    // 1111000000011111
+        do Memory.poke(memAddress + 256, -2033);    // 1111000000011111
+        do Memory.poke(memAddress + 288, -2033);    // 1111000000011111
+        do Memory.poke(memAddress + 320, 31774);    // 0111100000111110
+        do Memory.poke(memAddress + 352, 32318);    // 0111110001111110
+        do Memory.poke(memAddress + 384, 16380);    // 0011111111111100
+        do Memory.poke(memAddress + 416, 8184);    // 0001111111111000
+        do Memory.poke(memAddress + 448, 2016);    // 0000011111100000
+        do Memory.poke(memAddress + 480, 0);    // 0000000000000000
+        return;
+    }
+    method void draw1(int position) {
+        var int memAddress;
+        let memAddress = 16719 + position;
+        // Draw digit {i} at memAddress
+        do Memory.poke(memAddress + 0, 960);    // 0000001111000000
+        do Memory.poke(memAddress + 32, 1008);    // 0000111111000000
+        do Memory.poke(memAddress + 64, 1016);    // 0001111111000000
+        do Memory.poke(memAddress + 96, 1020);    // 0011111111000000
+        do Memory.poke(memAddress + 128, 1022);    // 0111111111000000
+        do Memory.poke(memAddress + 160, 1008);    // 0000111111000000
+        do Memory.poke(memAddress + 192, 1008);    // 0000111111000000
+        do Memory.poke(memAddress + 224, 1008);    // 0000111111000000
+        do Memory.poke(memAddress + 256, 1008);    // 0000111111000000
+        do Memory.poke(memAddress + 288, 1008);    // 0000111111000000
+        do Memory.poke(memAddress + 320, 1008);    // 0000111111000000
+        do Memory.poke(memAddress + 352, 1008);    // 0000111111000000
+        do Memory.poke(memAddress + 384, 16382);    // 0111111111111100
+        do Memory.poke(memAddress + 416, 16382);    // 0111111111111100
+        do Memory.poke(memAddress + 448, 16382);    // 0111111111111100
+        do Memory.poke(memAddress + 480, 0);    // 0000000000000000
+        return;
+    }
+    method void draw2(int position) {
+        var int memAddress;
+        let memAddress = 16719 + position;
+        // Draw digit {i} at memAddress
+        do Memory.poke(memAddress + 0, 2032);    // 0000111111100000
+        do Memory.poke(memAddress + 32, 4088);    // 0001111111110000
+        do Memory.poke(memAddress + 64, 8188);    // 0011111111111000
+        do Memory.poke(memAddress + 96, 15934);    // 0111110001111100
+        do Memory.poke(memAddress + 128, 15390);    // 0111100000111100
+        do Memory.poke(memAddress + 160, 15360);    // 0000000000111100
+        do Memory.poke(memAddress + 192, 7680);    // 0000000001111000
+        do Memory.poke(memAddress + 224, 3840);    // 0000000011110000
+        do Memory.poke(memAddress + 256, 1920);    // 0000000111100000
+        do Memory.poke(memAddress + 288, 960);    // 0000001111000000
+        do Memory.poke(memAddress + 320, 480);    // 0000011110000000
+        do Memory.poke(memAddress + 352, 240);    // 0000111100000000
+        do Memory.poke(memAddress + 384, 16382);    // 0111111111111100
+        do Memory.poke(memAddress + 416, 16382);    // 0111111111111100
+        do Memory.poke(memAddress + 448, 16382);    // 0111111111111100
+        do Memory.poke(memAddress + 480, 0);    // 0000000000000000
+        return;
+    }
+    method void draw3(int position) {
+        var int memAddress;
+        let memAddress = 16719 + position;
+        // Draw digit {i} at memAddress
+        do Memory.poke(memAddress + 0, 2032);    // 0000111111100000
+        do Memory.poke(memAddress + 32, 4088);    // 0001111111110000
+        do Memory.poke(memAddress + 64, 8188);    // 0011111111111000
+        do Memory.poke(memAddress + 96, 15934);    // 0111110001111100
+        do Memory.poke(memAddress + 128, 15390);    // 0111100000111100
+        do Memory.poke(memAddress + 160, 15360);    // 0000000000111100
+        do Memory.poke(memAddress + 192, 7680);    // 0000000001111000
+        do Memory.poke(memAddress + 224, 4064);    // 0000011111110000
+        do Memory.poke(memAddress + 256, 4064);    // 0000011111110000
+        do Memory.poke(memAddress + 288, 15360);    // 0000000000111100
+        do Memory.poke(memAddress + 320, 15360);    // 0000000000111100
+        do Memory.poke(memAddress + 352, 15902);    // 0111100001111100
+        do Memory.poke(memAddress + 384, 8190);    // 0111111111111000
+        do Memory.poke(memAddress + 416, 4092);    // 0011111111110000
+        do Memory.poke(memAddress + 448, 1008);    // 0000111111000000
+        do Memory.poke(memAddress + 480, 0);    // 0000000000000000
+        return;
+    }
+    method void draw4(int position) {
+        var int memAddress;
+        let memAddress = 16719 + position;
+        // Draw digit {i} at memAddress
+        do Memory.poke(memAddress + 0, 1920);    // 0000000111100000
+        do Memory.poke(memAddress + 32, 1984);    // 0000001111100000
+        do Memory.poke(memAddress + 64, 2016);    // 0000011111100000
+        do Memory.poke(memAddress + 96, 2032);    // 0000111111100000
+        do Memory.poke(memAddress + 128, 2040);    // 0001111111100000
+        do Memory.poke(memAddress + 160, 2044);    // 0011111111100000
+        do Memory.poke(memAddress + 192, 1982);    // 0111110111100000
+        do Memory.poke(memAddress + 224, 1950);    // 0111100111100000
+        do Memory.poke(memAddress + 256, 1935);    // 1111000111100000
+        do Memory.poke(memAddress + 288, 16383);    // 1111111111111100
+        do Memory.poke(memAddress + 320, 16383);    // 1111111111111100
+        do Memory.poke(memAddress + 352, 16383);    // 1111111111111100
+        do Memory.poke(memAddress + 384, 1920);    // 0000000111100000
+        do Memory.poke(memAddress + 416, 1920);    // 0000000111100000
+        do Memory.poke(memAddress + 448, 1920);    // 0000000111100000
+        do Memory.poke(memAddress + 480, 0);    // 0000000000000000
+        return;
+    }
+    method void draw5(int position) {
+        var int memAddress;
+        let memAddress = 16719 + position;
+        // Draw digit {i} at memAddress
+        do Memory.poke(memAddress + 0, 16382);    // 0111111111111100
+        do Memory.poke(memAddress + 32, 16382);    // 0111111111111100
+        do Memory.poke(memAddress + 64, 16382);    // 0111111111111100
+        do Memory.poke(memAddress + 96, 30);    // 0111100000000000
+        do Memory.poke(memAddress + 128, 30);    // 0111100000000000
+        do Memory.poke(memAddress + 160, 2046);    // 0111111111100000
+        do Memory.poke(memAddress + 192, 8190);    // 0111111111111000
+        do Memory.poke(memAddress + 224, 15872);    // 0000000001111100
+        do Memory.poke(memAddress + 256, 15360);    // 0000000000111100
+        do Memory.poke(memAddress + 288, 15360);    // 0000000000111100
+        do Memory.poke(memAddress + 320, 15902);    // 0111100001111100
+        do Memory.poke(memAddress + 352, 8190);    // 0111111111111000
+        do Memory.poke(memAddress + 384, 4092);    // 0011111111110000
+        do Memory.poke(memAddress + 416, 1016);    // 0001111111000000
+        do Memory.poke(memAddress + 448, 0);    // 0000000000000000
+        do Memory.poke(memAddress + 480, 0);    // 0000000000000000
+        return;
+    }
+    method void draw6(int position) {
+        var int memAddress;
+        let memAddress = 16719 + position;
+        // Draw digit {i} at memAddress
+        do Memory.poke(memAddress + 0, 2016);    // 0000011111100000
+        do Memory.poke(memAddress + 32, 4088);    // 0001111111110000
+        do Memory.poke(memAddress + 64, 8188);    // 0011111111111000
+        do Memory.poke(memAddress + 96, 15934);    // 0111110001111100
+        do Memory.poke(memAddress + 128, 30);    // 0111100000000000
+        do Memory.poke(memAddress + 160, 30);    // 0111100000000000
+        do Memory.poke(memAddress + 192, 2046);    // 0111111111100000
+        do Memory.poke(memAddress + 224, 8190);    // 0111111111111000
+        do Memory.poke(memAddress + 256, 15934);    // 0111110001111100
+        do Memory.poke(memAddress + 288, 15390);    // 0111100000111100
+        do Memory.poke(memAddress + 320, 15390);    // 0111100000111100
+        do Memory.poke(memAddress + 352, 15934);    // 0111110001111100
+        do Memory.poke(memAddress + 384, 8188);    // 0011111111111000
+        do Memory.poke(memAddress + 416, 4088);    // 0001111111110000
+        do Memory.poke(memAddress + 448, 2016);    // 0000011111100000
+        do Memory.poke(memAddress + 480, 0);    // 0000000000000000
+        return;
+    }
+    method void draw7(int position) {
+        var int memAddress;
+        let memAddress = 16719 + position;
+        // Draw digit {i} at memAddress
+        do Memory.poke(memAddress + 0, 16382);    // 0111111111111100
+        do Memory.poke(memAddress + 32, 16382);    // 0111111111111100
+        do Memory.poke(memAddress + 64, 16382);    // 0111111111111100
+        do Memory.poke(memAddress + 96, 7680);    // 0000000001111000
+        do Memory.poke(memAddress + 128, 3840);    // 0000000011110000
+        do Memory.poke(memAddress + 160, 1920);    // 0000000111100000
+        do Memory.poke(memAddress + 192, 960);    // 0000001111000000
+        do Memory.poke(memAddress + 224, 480);    // 0000011110000000
+        do Memory.poke(memAddress + 256, 240);    // 0000111100000000
+        do Memory.poke(memAddress + 288, 120);    // 0001111000000000
+        do Memory.poke(memAddress + 320, 60);    // 0011110000000000
+        do Memory.poke(memAddress + 352, 30);    // 0111100000000000
+        do Memory.poke(memAddress + 384, 14);    // 0111000000000000
+        do Memory.poke(memAddress + 416, 6);    // 0110000000000000
+        do Memory.poke(memAddress + 448, 2);    // 0100000000000000
+        do Memory.poke(memAddress + 480, 0);    // 0000000000000000
+        return;
+    }
+    method void draw8(int position) {
+        var int memAddress;
+        let memAddress = 16719 + position;
+        // Draw digit {i} at memAddress
+        do Memory.poke(memAddress + 0, 1008);    // 0000111111000000
+        do Memory.poke(memAddress + 32, 4092);    // 0011111111110000
+        do Memory.poke(memAddress + 64, 7742);    // 0111110001111000
+        do Memory.poke(memAddress + 96, 15390);    // 0111100000111100
+        do Memory.poke(memAddress + 128, 15390);    // 0111100000111100
+        do Memory.poke(memAddress + 160, 7740);    // 0011110001111000
+        do Memory.poke(memAddress + 192, 4088);    // 0001111111110000
+        do Memory.poke(memAddress + 224, 1008);    // 0000111111000000
+        do Memory.poke(memAddress + 256, 4092);    // 0011111111110000
+        do Memory.poke(memAddress + 288, 7742);    // 0111110001111000
+        do Memory.poke(memAddress + 320, 15390);    // 0111100000111100
+        do Memory.poke(memAddress + 352, 15390);    // 0111100000111100
+        do Memory.poke(memAddress + 384, 7742);    // 0111110001111000
+        do Memory.poke(memAddress + 416, 4092);    // 0011111111110000
+        do Memory.poke(memAddress + 448, 1008);    // 0000111111000000
+        do Memory.poke(memAddress + 480, 0);    // 0000000000000000
+        return;
+    }
+    method void draw9(int position) {
+        var int memAddress;
+        let memAddress = 16719 + position;
+        // Draw digit {i} at memAddress
+        do Memory.poke(memAddress + 0, 1008);    // 0000111111000000
+        do Memory.poke(memAddress + 32, 4092);    // 0011111111110000
+        do Memory.poke(memAddress + 64, 7742);    // 0111110001111000
+        do Memory.poke(memAddress + 96, 15390);    // 0111100000111100
+        do Memory.poke(memAddress + 128, 15390);    // 0111100000111100
+        do Memory.poke(memAddress + 160, 15934);    // 0111110001111100
+        do Memory.poke(memAddress + 192, 16380);    // 0011111111111100
+        do Memory.poke(memAddress + 224, 16376);    // 0001111111111100
+        do Memory.poke(memAddress + 256, 15360);    // 0000000000111100
+        do Memory.poke(memAddress + 288, 15360);    // 0000000000111100
+        do Memory.poke(memAddress + 320, 7710);    // 0111100001111000
+        do Memory.poke(memAddress + 352, 4094);    // 0111111111110000
+        do Memory.poke(memAddress + 384, 2044);    // 0011111111100000
+        do Memory.poke(memAddress + 416, 504);    // 0001111110000000
+        do Memory.poke(memAddress + 448, 0);    // 0000000000000000
+        do Memory.poke(memAddress + 480, 0);    // 0000000000000000
+        return;
+    }
+}

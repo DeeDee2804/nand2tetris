@@ -1,0 +1,25 @@
+class Main {
+
+	
+	function void main() {
+		var Game game;
+		var int key, i;
+
+		do Output.moveCursor(9, 5);
+		do Output.printString("Use left arrow to move left, right arrow to move right.");
+		do Output.moveCursor(10, 5);
+		do Output.printString("Use the up arrow to fire a missile. You have 100 missiles.");
+		do Output.moveCursor(12, 5);
+		do Output.printString("Press any key to start. Good luck!");
+		let key = 0;
+		while (key = 0){
+			let key = Keyboard.keyPressed();
+		}
+		
+		let game = Game.new();
+		do game.showScore();
+		do game.run();
+		do game.dispose();
+		return;
+	}
+}

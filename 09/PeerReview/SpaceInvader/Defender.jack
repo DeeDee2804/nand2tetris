@@ -1,0 +1,121 @@
+class Defender {
+
+	field int location;
+	field int base;
+
+	constructor Defender new(){
+		let location = 16;
+		let base = 16384 + 7488;
+		return this;
+	}
+	
+	method void dispose(){
+		do Memory.deAlloc(this);
+		return;
+	}
+	
+	method int whereRU(){
+		return base - 416 + location + 1;			// return the location of th top of the missile launcher
+	}
+	
+	method void show(){						
+		do drawLeft(location);
+		do drawRight(location + 1);
+		return;
+	}
+	
+	method void moveLeft() {				// move defender left
+		if (location > 0) {
+			do eraseRight(location + 1);
+			let location = location - 1;
+			do show();
+		}
+		return;
+	}
+	
+	method void moveRight() {				// move defender right
+		if (location < 30){
+			do eraseLeft(location);
+			let location = location + 1;
+			do show();
+		}
+		return;
+	}
+
+
+	method void drawLeft(int loc) {			// draw the left half of defender	
+		var int memAddress; 
+		let memAddress = base + loc;
+		// column 0
+		do Memory.poke(memAddress -352, -16384);
+		do Memory.poke(memAddress -320, -16384);
+		do Memory.poke(memAddress -288, -16384);
+		do Memory.poke(memAddress -256, -8192);
+		do Memory.poke(memAddress -224, -128);
+		do Memory.poke(memAddress -192, -64);
+		do Memory.poke(memAddress -160, -32);
+		do Memory.poke(memAddress -128, -16);
+		do Memory.poke(memAddress -96, -8);
+		do Memory.poke(memAddress -64, -4);
+		do Memory.poke(memAddress -32, -2);
+		do Memory.poke(memAddress, -1);
+	return;		
+	}
+	
+	method void drawRight(int loc) {		// draw the right half of defender
+		var int memAddress; 
+		let memAddress = base + loc;
+		// column 0
+		do Memory.poke(memAddress -352, 3);
+		do Memory.poke(memAddress -320, 3);
+		do Memory.poke(memAddress -288, 3);
+		do Memory.poke(memAddress -256, 7);
+		do Memory.poke(memAddress -224, 511);
+		do Memory.poke(memAddress -192, 1023);
+		do Memory.poke(memAddress -160, 2047);
+		do Memory.poke(memAddress -128, 4095);
+		do Memory.poke(memAddress -96, 8191);
+		do Memory.poke(memAddress -64, 16383);
+		do Memory.poke(memAddress -32, 32767);
+		do Memory.poke(memAddress, -1);
+	return;
+	}
+
+	method void eraseLeft(int loc) {			// erase the left half of defender
+		var int memAddress; 
+		let memAddress = base + loc;
+		// column 0
+		do Memory.poke(memAddress -352, 0);
+		do Memory.poke(memAddress -320, 0);
+		do Memory.poke(memAddress -288, 0);
+		do Memory.poke(memAddress -256, 0);
+		do Memory.poke(memAddress -224, 0);
+		do Memory.poke(memAddress -192, 0);
+		do Memory.poke(memAddress -160, 0);
+		do Memory.poke(memAddress -128, 0);
+		do Memory.poke(memAddress -96, 0);
+		do Memory.poke(memAddress -64, 0);
+		do Memory.poke(memAddress -32, 0);
+		do Memory.poke(memAddress, -1);
+	return;		
+	}
+	
+	method void eraseRight(iny loc) {			// erase the right half of defender
+		var int memAddress; 
+		let memAddress = base + loc;
+		// column 0
+		do Memory.poke(memAddress -352, 0);
+		do Memory.poke(memAddress -320, 0);
+		do Memory.poke(memAddress -288, 0);
+		do Memory.poke(memAddress -256, 0);
+		do Memory.poke(memAddress -224, 0);
+		do Memory.poke(memAddress -192, 0);
+		do Memory.poke(memAddress -160, 0);
+		do Memory.poke(memAddress -128, 0);
+		do Memory.poke(memAddress -96, 0);
+		do Memory.poke(memAddress -64, 0);
+		do Memory.poke(memAddress -32, 0);
+		do Memory.poke(memAddress, 0);
+	return;
+	}
+}

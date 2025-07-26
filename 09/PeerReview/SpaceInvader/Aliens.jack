@@ -1,0 +1,177 @@
+class Aliens {
+	field Array aliens;
+	field int rows, columns;
+	field int action, tickCount, tickDown, speed, downMoves;
+	
+	constructor Aliens new() {
+		var int r, c, x;
+		
+		let rows = 4;
+		let	columns = 9;
+		let x = 0;
+		while (x < 8192) {
+			do Memory.poke((x + 16384), 0);		// clear screen
+			let x = x + 1;
+		}
+		let x = ((32 - (columns * 3)) / 2) + 1;
+		let aliens = Array.new(rows * columns);
+		let r = (rows - 1);
+		while (~(r < 0)){						// build array of aliens
+			let c = 0;
+			while (c < columns){
+				let aliens[(r*columns) + c] = Alien.new((r * 896) + x + (c * 3));
+				let c = c + 1;
+			}
+			let r = r - 1;
+		}
+		let action = 1;
+		let speed = 150;
+
+		let downMoves = 0;
+		let tickDown = 0;
+		return this;
+	}
+	
+	method void dispose(){
+		var int i;
+		var Alien alien;
+		
+		while (i < (rows * columns)){			// dispose of all the aliens
+			let alien = aliens[i];
+			do alien.dispose();
+			let i = i + 1;
+		}
+		do Memory.deAlloc(this);
+		return;
+	}
+
+	
+	method int tick(){							// called periodically from game
+		var int z, result;
+		
+		let tickCount = tickCount + 1;
+		let result = 0;
+		if (tickCount = speed) {				// if its time for aliens to move
+			let tickCount = 0;
+			if (action = 1) {
+				do moveLeft();
+			}
+			if ((action > 1) & (action < 5)) {		// move right
+				do moveRight();
+			}
+			if ((action > 4) & (action < 7)){		// move left
+				do moveLeft();
+			}
+			if (action = 6) {	
+				do moveLeft();				// small movemement to be less predictable
+			}
+			if (action = 7) {	
+				do moveRight();					// small movemement to be less predictable
+				let action = 0;				// go back to stage 1
+			}
+			let action = action + 1;
+			let tickDown = tickDown + 1;
+			if (tickDown = 8){
+				let result = moveDown();	// move aliens down
+				let tickDown = 0;
+			}
+		}
+		
+		return result;
+	}
+	
+	method int kill(int location){				// alien hit. Kill it off. Returns 0 = all dead, 1 = survivors
+		var Alien alien;
+		var int r, c, i, j, aloc, ar, ac;
+		var boolean found;
+		
+		let j = rows * columns;					// number of aliens
+		let r = location / 32;					// convert hit location to
+		let c = location & 31;					// row and column
+		let i = 0;
+		let found = false;
+		while ((~found) & (i < j)) {			// determin which alien was hit5
+			let alien = aliens[i];
+			if (alien.isAlive()){
+				let aloc = alien.whereRU();
+				let ar = aloc / 32;						// aliens row
+				let ac = aloc & 31;						// and column
+				if ((~(r < ar)) & (~(r > (ar + 16)))){
+					if ((~(c < ac)) & (~(c > (ac + 1)))) {
+						let found = true;
+					}
+				}
+			}	
+			let i = i + 1;
+		}
+		if (found){
+			do alien.die();				// alien found, kill it off
+		}
+		let i = 0;
+		while (i < (rows * columns)){   // check for all aliens killed
+			let alien = aliens[i];
+			if (alien.isAlive()) {
+				return 1;
+			}
+			let i = i + 1;
+		}
+		
+		return 0;
+	}
+
+	
+	method void show(){
+		var int i;
+		var Alien alien;
+		let i = 0;
+		while (i < (rows * columns)){
+			let alien = aliens[i];
+			do alien.show();
+			let i = i + 1;
+		}
+		return;
+	}
+	
+	method void moveLeft(){
+		var int i;
+		var Alien alien;
+		let i = 0;
+		while (i < (rows * columns)){
+			let alien = aliens[i];
+			do alien.moveLeft();
+			let i = i + 1;
+		}
+		return;
+	}
+	
+	method void moveRight(){
+		var int i;
+		var Alien alien;
+		let i = (rows * columns) - 1;
+		while (~(i < 0)){
+			let alien = aliens[i];
+			do alien.moveRight();
+			let i = i - 1;
+		}
+		return;
+	}
+	
+	method int moveDown(){				// returns 1 if alien(s) are at the bottom of the playing areea, 0 otherwise
+		var int i, result;
+		var Alien alien;
+		let i = 0;
+		let result = 0;
+		let downMoves = downMoves + 1;
+		if (downMoves = 5) {
+			let speed = speed - 5;		// speed it up a bit;
+			let downMoves = 0;
+		}
+		while ((i < (rows * columns)) & (result = 0)){
+			let alien = aliens[i];
+			let result = (result | alien.moveDown());			// move one down
+			let i = i + 1;
+		}
+		return result;
+	}
+	
+}

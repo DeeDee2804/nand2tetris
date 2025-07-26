@@ -1,0 +1,123 @@
+/**
+ * The Snake game.
+ */
+class SnakeGame {
+  field int m_snakeSize;
+  field Square m_apple;
+  field Snake m_snake;
+  field ScreenRand m_screenRand;
+
+  /**
+   * Create a new game.
+   *
+   * @return the new game
+   */
+  constructor SnakeGame new() {
+    let m_snakeSize = 3;
+    let m_snake = Snake.new(m_snakeSize);
+    let m_screenRand = ScreenRand.new(256, 128);
+    return this;
+  }
+
+  /**
+   * Run the main loop of the game.
+   *
+   * Shows a `Game Over` message when the snake dies.
+   */
+  method void run() {
+    var char key;
+
+    do Screen.setColor(true);
+    do spawn_apple_priv();
+
+    while (~m_snake.isDead()) {
+      do Screen.clearScreen();
+
+      do draw_apple_priv();
+      do m_snake.draw();
+
+      if (m_snake.eatApple(m_apple)) {
+        do spawn_apple_priv();
+      }
+
+      let key = Keyboard.keyPressed();
+
+      if (key = 131) {
+        do m_snake.up();
+      }
+      if (key = 133) {
+        do m_snake.down();
+      }
+      if (key = 130) {
+        do m_snake.left();
+      }
+      if (key = 132) {
+        do m_snake.right();
+      }
+    }
+
+    do Screen.clearScreen();
+    do show_game_over_priv();
+
+    return;
+  }
+
+  /**
+   * Free the memory allocated for this game.
+   */
+  method void dispose() {
+    do m_apple.dispose();
+    do m_snake.dispose();
+    do m_screenRand.dispose();
+    do Memory.deAlloc(this);
+    return;
+  }
+
+  /* Private Methods (DO NOT CALL FROM OUTSIDE) */
+
+  method void spawn_apple_priv() {
+    let m_apple = Square.new(
+      m_screenRand.randX(),
+      m_screenRand.randY(),
+      m_snakeSize
+    );
+
+    while ((m_snake.isHead(m_apple)) |
+           (m_snake.isTail(m_apple)) |
+           (m_apple.x() < 0) |
+           (m_apple.right() = 512) |
+           (m_apple.y() < 0) |
+           (m_apple.bottom() = 256)) {
+      do m_apple.dispose();
+
+      let m_apple = Square.new(
+        m_screenRand.randX(),
+        m_screenRand.randY(),
+        m_snakeSize
+      );
+    }
+
+    return;
+  }
+
+  method void draw_apple_priv() {
+    do Screen.drawRectangle(
+      m_apple.x(),
+      m_apple.y(),
+      m_apple.right(),
+      m_apple.bottom()
+    );
+    return;
+  }
+
+  method void show_game_over_priv() {
+    var String message;
+
+    let message = "Game Over";
+
+    do Output.moveCursor(11, (64 - message.length()) / 2);
+    do Output.printString(message);
+
+    return;
+  }
+}

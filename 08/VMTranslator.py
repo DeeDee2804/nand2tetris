@@ -86,7 +86,7 @@ class VMParser():
             return VMCommand(*fields)
         
     # Try to read the next command
-    def nextCommand(self) -> (str, "VMCommand"):
+    def nextCommand(self) -> tuple[str, "VMCommand"]:
         try:
             #BUG_FIX: Run next of generator before return
             cmd = next(self.commands)

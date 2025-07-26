@@ -1,0 +1,260 @@
+/**
+ * The snake of the game.
+ */
+class Snake {
+  field SquaresList m_body;     /** Head is always at the end */
+  field int m_currentDirection; /** UP=0, DOWN=1, LEFT=2, RIGHT=3 */
+
+  /**
+   * Create a new snake.
+   *
+   * @param size - the size in pixels of each square in the snake's body
+   *
+   * @return the new snake
+   */
+  constructor Snake new(int size) {
+    var int y;
+
+    let m_body = SquaresList.new(3);
+    let m_currentDirection = 1; // DOWN
+
+    // the snake starts at the middle top of the screen
+    let y = 0;
+    do m_body.add(Square.new(256, y, size));
+    let y = y + size + 1;
+    do m_body.add(Square.new(256, y, size));
+    let y = y + size + 1;
+    do m_body.add(Square.new(256, y, size));
+
+    return this;
+  }
+
+  /**
+   * Try to eat an apple.
+   *
+   * The apple is eaten if the head of the snake overlaps with the apple.
+   *
+   * @param apple - the square representing the apple
+   *
+   * @return true if the apple was eaten, false otherwise
+   */
+  method boolean eatApple(Square apple) {
+    if (isHead(apple)) {
+      do m_body.add(apple);
+      do move_priv();
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if the snake is dead.
+   *
+   * The snake is considered dead if its head bumps a wall or its own tail.
+   *
+   * @return true if the snake is dead, false otherwise
+   */
+  method boolean isDead() {
+    var Square head;
+    var int i;
+
+    let head = m_body.last();
+
+    // check if the head intersects any of the walls
+    if ((head.x() < 0) | (head.y() < 0)) {
+      return true;
+    }
+    if ((head.right() > 511) | (head.bottom() > 255)) {
+      return true;
+    }
+
+    // check if the head intersects any point in the tail
+    let i = 0;
+    while (i < (m_body.size() - 1)) {
+      if (head.intersects(m_body.get(i))) {
+        return true;
+      }
+      let i = i + 1;
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if a square coincides with the snake's head.
+   *
+   * @param square - the given square
+   *
+   * @return true if the given square is the snake's head, false otherwise
+   */
+  method boolean isHead(Square square) {
+    return square.intersects(m_body.last());
+  }
+
+  /**
+   * Check if a square is part of the snake's tail.
+   *
+   * @param square - the given square
+   *
+   * @return true if the given square is in the snake's tail, false otherwise
+   */
+  method boolean isTail(Square square) {
+    var int i;
+    let i = 0;
+    while (i < m_body.size()) {
+      if (square.intersects(m_body.get(i))) {
+        return true;
+      }
+      let i = i + 1;
+    }
+    return false;
+  }
+
+  /**
+   * Try to move the snake up.
+   *
+   * This succeeds only if the snake was moving horizontally.
+   */
+  method void up() {
+    // can only move LEFT or RIGHT
+    if (m_currentDirection < 2) {
+      return;
+    }
+
+    // change direction
+    let m_currentDirection = 0; // UP
+
+    return;
+  }
+
+  /**
+   * Try to move the snake down.
+   *
+   * This succeeds only if the snake was moving horizontally.
+   */
+  method void down() {
+    // can only move LEFT or RIGHT
+    if (m_currentDirection < 2) {
+      return;
+    }
+
+    // change direction
+    let m_currentDirection = 1; // DOWN
+
+    return;
+  }
+
+  /**
+   * Try to move the snake left.
+   *
+   * This succeeds only if the snake was moving vertically.
+   */
+  method void left() {
+    // can only move UP or DOWN
+    if (m_currentDirection > 1) {
+      return;
+    }
+
+    // change direction
+    let m_currentDirection = 2; // LEFT
+
+    return;
+  }
+
+  /**
+   * Try to move the snake right.
+   *
+   * This succeeds only if the snake was moving vertically.
+   */
+  method void right() {
+    // can only move UP or DOWN
+    if (m_currentDirection > 1) {
+      return;
+    }
+
+    // change direction
+    let m_currentDirection = 3; // RIGHT
+
+    return;
+  }
+
+  /**
+   * Draw the snake on the screen.
+   *
+   * Each part of the snake's body is drawn as a square.
+   * After drawing, the snake keeps moving in its current direction.
+   */
+  method void draw() {
+    var int i;
+    var Square square;
+
+    let i = 0;
+    while (i < m_body.size()) {
+      let square = m_body.get(i);
+
+      do Screen.drawRectangle(
+        square.x(),
+        square.y(),
+        square.right(),
+        square.bottom()
+      );
+
+      let i = i + 1;
+    }
+
+    do move_priv();
+    do Sys.wait(10);
+
+    return;
+  }
+
+  /**
+   * Free the memory allocated for this snake.
+   */
+  method void dispose() {
+    do m_body.dispose();
+    do Memory.deAlloc(this);
+    return;
+  }
+
+  /* Private Methods (DO NOT CALL FROM OUTSIDE) */
+
+  method void move_priv() {
+    var int i;
+    var Square head;
+    var Square currentSquare, nextSquare;
+
+    // move tail
+    let i = 0;
+
+    while (i < (m_body.size() - 1)) {
+      // each square in the tail moves where the next one used to be
+      let currentSquare = m_body.get(i);
+      let nextSquare = m_body.get(i + 1);
+
+      do currentSquare.setX(nextSquare.x());
+      do currentSquare.setY(nextSquare.y());
+
+      let i = i + 1;
+    }
+
+    // move head
+    let head = m_body.get(i);
+
+    if (m_currentDirection = 0) { // UP
+      do head.setY(head.y() - head.size() - 1);
+    }
+    if (m_currentDirection = 1) { // DOWN
+      do head.setY(head.bottom() + 1);
+    }
+    if (m_currentDirection = 2) { // LEFT
+      do head.setX(head.x() - head.size() - 1);
+    }
+    if (m_currentDirection = 3) { // RIGHT
+      do head.setX(head.right() + 1);
+    }
+
+    return;
+  }
+}
