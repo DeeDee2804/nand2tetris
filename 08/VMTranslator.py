@@ -1,4 +1,3 @@
-from typing import Iterator
 from enum import Enum
 from pathlib import PurePath, Path
 from collections import defaultdict
@@ -51,31 +50,28 @@ class VMParser():
     
     def __init__(self, filepath: str):
         self.commands = self.read(filepath)
+        self.current_index = 0
 
-    # Create a generator which yields VMCommand
-    def read(self, filepath: Path) -> Iterator["VMCommand"]:
+    # Read all commands and store them in a list
+    def read(self, filepath: Path) -> list[tuple[str, "VMCommand"]]:
+        commands = []
         if filepath.is_dir():
             for vmpath in filter(lambda x: x.suffix == ".vm", filepath.iterdir()):
                 with open(vmpath, 'r') as VMFile:
-                    for line in VMFile.readlines():
+                    for line in VMFile:  # More memory efficient than readlines()
                         command = self.parse(line)
-                        #BUG_FIX: Check command is not None before yield
-                        if command is None:
-                            continue
-                        else:
-                            yield (vmpath.stem, command)
+                        if command is not None:
+                            commands.append((vmpath.stem, command))
         else:
             with open(filepath, 'r') as VMFile:
-                for line in VMFile.readlines():
+                for line in VMFile:  # More memory efficient than readlines()
                     command = self.parse(line)
-                    #BUG_FIX: Check command is not None before yield
-                    if command is None:
-                        continue
-                    else:
-                        yield (filepath.stem, command)
+                    if command is not None:
+                        commands.append((filepath.stem, command))
+        return commands
 
     # Parse the VM line of code into VMCommand object
-    def parse(self, line:str) -> "VMCommand":
+    def parse(self, line: str) -> "VMCommand":
         comment_idx = line.find("//")
         line = line[:comment_idx]
         line = line.strip().lower()
@@ -85,13 +81,13 @@ class VMParser():
             fields = line.split(" ")
             return VMCommand(*fields)
         
-    # Try to read the next command
+    # Get the next command from the list
     def nextCommand(self) -> tuple[str, "VMCommand"]:
-        try:
-            #BUG_FIX: Run next of generator before return
-            cmd = next(self.commands)
+        if self.current_index < len(self.commands):
+            cmd = self.commands[self.current_index]
+            self.current_index += 1
             return cmd
-        except:
+        else:
             return None
 
 class ASMWriter():
