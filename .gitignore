@@ -1,2 +1,5 @@
 tools/bin/*.dat
 09/*/*.vm
+.vscode/**
+**/__pycache__/**
+**/*.pyc
