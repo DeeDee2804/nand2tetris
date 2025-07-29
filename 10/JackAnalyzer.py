@@ -68,105 +68,135 @@ class JackTokenizer:
 
         :param file_path: The path to the Jack source code file.
         """
-        in_comment = False
-        in_string = False
-        string_parts = []
         with open(filepath, 'r') as JackFile:
-            for line in JackFile:
-                words = line.strip().split(" ")
-                idx = 0
-                while idx < len(words):
-                    if in_comment:
-                        end_multi_cmt_idx = words[idx].find('*/')
-                        if end_multi_cmt_idx != -1:
-                            in_comment = False
-                            words[idx] = words[idx][end_multi_cmt_idx + 2:]
-                        else:
-                            idx += 1
-                            continue
-                    elif in_string:
-                        # The pattern to find the end of a string (unescaped quote) 
-                        endstr_pattern = r'(?<!\\)(?:\\{2})*"' 
-                        match = re.search(endstr_pattern, words[idx])  
-                        if match:
-                            in_string = False
-                            string_parts.append(words[idx][:match.start()])
-                            words[idx] = words[idx][match.end():]
-                            self.tokens.append(Token(TokenType.STRING_CONST, ' '.join(string_parts)))
-                            string_parts = []
-                        else:
-                            string_parts.append(words[idx])
-                            idx += 1
-                            continue
-                    else:
-                        match = re.search(r'("|//|/\*)', words[idx])
-                        if match:
-                            if match.group(1) == '//':
-                                # If single line comment found, skip the rest of the line
-                                break
-                            elif match.group(1) == '"':
-                                # If string found, set in_string to True
-                                in_string = True
-                                self.parse(words[idx][:match.start()])
-                                words[idx] = words[idx][match.end():]
-                                continue
-                            else:
-                                # If multi-line comment found, set in_comment to True
-                                in_comment = True
-                                words[idx] = words[idx][match.end():]
-                                continue
-                        else:
-                            self.parse(words[idx])
-                            idx += 1
-                            continue
+            self.content = JackFile.read()
+        
+        # Reset the tokens list
+        self.tokens = []
+        
+        # Iterate over each character of content
+        self.pos = 0
+        self.length = len(self.content)
+        while self.pos < self.length:
+            # Skip whitespace
+            if self.content[self.pos].isspace():
+                self.pos += 1
+                continue
+                
+            # Check for single line comment
+            if self.pos < self.length - 1 and self.content[self.pos:self.pos+2] == '//':
+                self._skip_single_line_comment()
+                continue
+            
+            # Check for block comment
+            if self.pos < self.length - 1 and self.content[self.pos:self.pos+2] == '/*':
+                self._skip_multi_line_comment()
+                continue
+                
+            # Check for string literals SECOND
+            if self.content[self.pos] == '"':
+                self._parse_string_literal()
+                continue
+                
+            # Check for numbers
+            if self.content[self.pos].isdigit():
+                self._parse_number()
+                continue
+                
+            # Check for symbols
+            if self.content[self.pos] in self.symbols:
+                self.tokens.append(Token(TokenType.SYMBOL, self.content[self.pos]))
+                self.pos += 1
+                continue
+                
+            # Check for identifiers/keywords
+            if self.content[self.pos].isalnum() or self.content[self.pos] == '_':
+                self._parse_identifier()
+                continue
+                
+            # Invalid character
+            raise ValueError(f"Unexpected character '{self.content[self.pos]}' at position {self.pos}")
+        
+        # Clean up to free memory
+        self.content = ""
+        self.pos = 0
+        self.length = 0
 
-                    # Check if the current word is empty, go to the next word
-                    if len(words[idx]) == 0:
-                        idx += 1
+    def _skip_single_line_comment(self) -> None:
+        """Skip single line comment and return new position."""
+        # Skip // 
+        self.pos += 2
+        # Search for end of comment
+        while self.pos < self.length and self.content[self.pos] != '\n':
+            self.pos += 1
+        # Skip \n if exist
+        if self.pos < self.length:
+            self.pos += 1   
 
-    def parse(self, word: str):
-        """
-        Parses a single word and adds the corresponding token to the list of tokens.
-        
-        :param word: The word to parse.
-        :raises ValueError: If the word contains invalid characters.
-        """
-        if not word or word.isspace():
-            return
-        
-        int_const = ''
-        identifier = ''
-        
-        for char in word:
-            if char in self.symbols:
-                # Flush any pending token
-                if int_const:
-                    self.tokens.append(Token(TokenType.INT_CONST, int_const))
-                    int_const = ''
-                elif identifier:
-                    token_type = TokenType.KEYWORD if identifier in self.keywords else TokenType.IDENTIFIER
-                    self.tokens.append(Token(token_type, identifier))
-                    identifier = ''
-                self.tokens.append(Token(TokenType.SYMBOL, char))
-            elif not identifier and char.isdigit():
-                int_const += char
-            elif char.isalnum() or char == '_':
-                # Transition from int_const to identifier
-                if int_const:
-                    self.tokens.append(Token(TokenType.INT_CONST, int_const))
-                    int_const = ''
-                identifier += char
-            # Ignore other characters (whitespace, etc.)
+    def _skip_multi_line_comment(self) -> None:
+        """Skip multi-line comment and return new position."""
+        # Skip /*
+        self.pos += 2
+        # Search for end of comment
+        while self.pos < self.length - 1:
+            if self.content[self.pos:self.pos+2] == '*/':
+                # Skip */
+                self.pos += 2 
+                return
+            self.pos += 1
+        raise ValueError("Unterminated multi-line comment")
+
+    def _parse_string_literal(self) -> None:
+        # Skip opening quote "
+        self.pos += 1
+        start = self.pos
+        # Search for end of string literal
+        while self.pos < self.length and self.content[self.pos] != '"':
+            if self.content[self.pos] == '\\':
+                # Skip escape sequence that may contain "
+                self.pos += 2
             else:
-                raise ValueError(f"Invalid character '{char}' in word '{word}'")
+                self.pos += 1
+                    
+        # No string literal found
+        if self.pos >= self.length:
+            raise ValueError("Unterminated string literal")
         
-        # Handle remaining tokens
-        if int_const:
-            self.tokens.append(Token(TokenType.INT_CONST, int_const))
-        elif identifier:
-            token_type = TokenType.KEYWORD if identifier in self.keywords else TokenType.IDENTIFIER
-            self.tokens.append(Token(token_type, identifier))
-        return
+        # Extract the raw string (including escape sequences)
+        string_value = self.content[start:self.pos]
+        self.tokens.append(Token(TokenType.STRING_CONST, string_value))
+        # Skip closing quote
+        self.pos += 1  
+
+    def _parse_number(self) -> None:
+        """Parse integer literal and add token."""
+        start = self.pos
+        while self.pos < self.length and self.content[self.pos].isdigit():
+            self.pos += 1
+        # Check no mix between numbers and characters
+        if self.pos < self.length and self.content[self.pos].isalpha():
+            raise ValueError("Invalid character in number literal")
+        
+        # Extract the raw number
+        number_value = self.content[start:self.pos]
+        
+        # Check range of parsed integer
+        if len(number_value) > 5:
+            raise ValueError("Integer literal too long")
+        elif len(number_value) == 5 and int(number_value) > 32767:
+            raise ValueError("Integer literal too large")
+        self.tokens.append(Token(TokenType.INT_CONST, number_value))
+
+    def _parse_identifier(self) -> None:
+        """Parse identifier/keyword and add token."""
+        start = self.pos
+        while self.pos < self.length and (self.content[self.pos].isalnum() or self.content[self.pos] == '_'):
+            self.pos += 1
+
+        # Extract raw identifier/keyword
+        identifier_value = self.content[start:self.pos]
+        token_type = TokenType.KEYWORD if identifier_value in self.keywords else TokenType.IDENTIFIER
+        self.tokens.append(Token(token_type, identifier_value))
 
     def hasMoreTokens(self):
         """
@@ -219,8 +249,9 @@ class CompilationEngine:
         self.tokenizer = tokenizer
         self.content = []
         self.tablevel = 0
-        # Add prefix "my" to the output file name
-        self.output_file = output_file
+        self.name = output_file.stem
+        self.output_file = output_file.with_name(f"my{output_file.stem}.xml")
+        
 
     def compile(self):
         """
@@ -253,13 +284,13 @@ class CompilationEngine:
         self.tablevel -= 1
         self.content.append(f"{'  ' * self.tablevel}</{tag}>")
         
-    def addSimpleTag(self, token: Token):
+    def addSimpleTag(self):
         """
         Adds a simple tag with a value to the compilation engine's content list.
         
         :param token: The token to add as XML.
         """
-        self.content.append(f"{'  ' * self.tablevel}{token.xml()}")
+        self.content.append(f"{'  ' * self.tablevel}{self.tokenizer.currentToken().xml()}")
 
     def compileClass(self):
         """
@@ -272,34 +303,42 @@ class CompilationEngine:
             self.tokenizer.advance()
             if self.tokenizer.currentToken().value != "class":
                 raise ValueError(f"Expected 'class' but got {self.tokenizer.currentToken().value}")
+
             self.addOpenTag("class")
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
 
             # Expecting a class name (identifier) after 'class'
             self.tokenizer.advance()
             if self.tokenizer.currentToken().token_type != TokenType.IDENTIFIER:
                 raise ValueError(f"Expected class name but got {self.tokenizer.currentToken().value}")
-            self.addSimpleTag(self.tokenizer.currentToken())
+            if self.tokenizer.currentToken().value != self.name:
+                raise ValueError(f"Expected class name '{self.name}' but got {self.tokenizer.currentToken().value}")
+            self.addSimpleTag()
 
             # Expecting an opening brace '{' after the class name
             self.tokenizer.advance()
             if self.tokenizer.currentToken().value != "{":
                 raise ValueError(f"Expected '{{' but got {self.tokenizer.currentToken().value}")
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
            
 
             # Process class variable declarations and subroutines until we reach the closing brace '}'
+            endVarDec = False
             while self.tokenizer.nextToken().value != "}":
                 if self.tokenizer.nextToken().value in {"static", "field"}:
+                    if endVarDec:
+                        raise ValueError("Variable declaration must only be placed at the beginning of the class.")
                     self.compileClassVarDec()
                 elif self.tokenizer.nextToken().value in {"constructor", "function", "method"}:
+                    # Subroutine declaration must come after variable declarations
+                    endVarDec = True
                     self.compileSubroutine()
                 else:
                     raise ValueError(f"Unexpected token in class body: {self.tokenizer.nextToken().value}")
 
             # Expecting a closing brace '}' at the end of the class body
             self.tokenizer.advance()
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
             self.addCloseTag("class")
 
     def compileClassVarDec(self):
@@ -314,7 +353,7 @@ class CompilationEngine:
             raise ValueError(f"Expected 'static' or 'field' but got {self.tokenizer.currentToken().value}")
         
         self.addOpenTag("classVarDec")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Expecting a type (int, char, boolean, or identifier)
         self.compileType()
@@ -323,22 +362,22 @@ class CompilationEngine:
         self.tokenizer.advance()
         if self.tokenizer.currentToken().token_type != TokenType.IDENTIFIER:
             raise ValueError(f"Expected variable name but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         self.tokenizer.advance()
         while self.tokenizer.currentToken().value == ",":
             # Expecting a comma ',' followed by another identifier
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
             self.tokenizer.advance()
             if self.tokenizer.currentToken().token_type != TokenType.IDENTIFIER:
                 raise ValueError(f"Expected variable name but got {self.tokenizer.currentToken().value}")
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
             self.tokenizer.advance()
 
         # Expecting a semicolon ';' at the end of the declaration
         if self.tokenizer.currentToken().value != ";":  
             raise ValueError(f"Expected ';' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
         self.addCloseTag("classVarDec")
 
     def compileSubroutine(self):
@@ -352,12 +391,12 @@ class CompilationEngine:
         if self.tokenizer.currentToken().value not in {"constructor", "function", "method"}:
             raise ValueError(f"Expected 'constructor', 'function', or 'method' but got {self.tokenizer.currentToken().value}")
         self.addOpenTag("subroutineDec")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Expecting a return type (void or type)
         if self.tokenizer.nextToken().value == "void":
             self.tokenizer.advance()
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
         else:
             self.compileType()
         
@@ -365,13 +404,13 @@ class CompilationEngine:
         self.tokenizer.advance()
         if self.tokenizer.currentToken().token_type != TokenType.IDENTIFIER:
             raise ValueError(f"Expected subroutine name but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Expecting an opening parenthesis '(' for the parameter list
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != "(":
             raise ValueError(f"Expected '(' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Compile the parameter list
         self.compileParameterList()
@@ -380,7 +419,7 @@ class CompilationEngine:
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != ")":
             raise ValueError(f"Expected ')' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
         
         # Compile the subroutine body
         self.compileSubroutineBody()
@@ -396,14 +435,13 @@ class CompilationEngine:
         :raises ValueError: If the current token is not a valid type.
         """
         self.tokenizer.advance()
-        token = self.tokenizer.currentToken()
-        if token.value in {"int", "char", "boolean"}:
-            self.addSimpleTag(token)
-        elif token.token_type == TokenType.IDENTIFIER:
-            self.addSimpleTag(token)
+        if self.tokenizer.currentToken().value in {"int", "char", "boolean"}:
+            self.addSimpleTag()
+        elif self.tokenizer.currentToken().token_type == TokenType.IDENTIFIER:
+            self.addSimpleTag()
         else:
-            raise ValueError(f"Expected type but got {token.value}")
-    
+            raise ValueError(f"Expected type but got {self.tokenizer.currentToken().value}")
+
     def compileParameterList(self):
         """
         Compiles a parameter list from the Jack source code.
@@ -423,12 +461,12 @@ class CompilationEngine:
         self.tokenizer.advance()
         if self.tokenizer.currentToken().token_type != TokenType.IDENTIFIER:
             raise ValueError(f"Expected parameter name but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Check for additional parameters (optional)
         while self.tokenizer.nextToken().value == ",":
             self.tokenizer.advance()
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
 
             # Expecting a comma ',' followed by another type
             self.compileType()
@@ -437,7 +475,7 @@ class CompilationEngine:
             self.tokenizer.advance()
             if self.tokenizer.currentToken().token_type != TokenType.IDENTIFIER:
                 raise ValueError(f"Expected parameter name but got {self.tokenizer.currentToken().value}")
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
 
         # After processing all parameters, we should be at the closing parenthesis
         self.addCloseTag("parameterList")           
@@ -454,7 +492,7 @@ class CompilationEngine:
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != "{":
             raise ValueError(f"Expected '{{' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Process variable declarations
         while self.tokenizer.nextToken().value == "var":
@@ -468,7 +506,7 @@ class CompilationEngine:
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != "}":
             raise ValueError(f"Expected '}}' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
         self.addCloseTag("subroutineBody")
 
     def compileVarDec(self):
@@ -482,7 +520,7 @@ class CompilationEngine:
             raise ValueError(f"Expected 'var' but got {self.tokenizer.currentToken().value}")
         
         self.addOpenTag("varDec")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Expecting a type (int, char, boolean, or identifier)
         self.compileType()
@@ -491,23 +529,23 @@ class CompilationEngine:
         self.tokenizer.advance()
         if self.tokenizer.currentToken().token_type != TokenType.IDENTIFIER:
             raise ValueError(f"Expected variable name but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Check for additional variable names
         self.tokenizer.advance()
         while self.tokenizer.currentToken().value == ",":
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
             # Expecting a comma ',' followed by another identifier
             self.tokenizer.advance()
             if self.tokenizer.currentToken().token_type != TokenType.IDENTIFIER:
                 raise ValueError(f"Expected variable name but got {self.tokenizer.currentToken().value}")
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
             self.tokenizer.advance()
 
         # Expecting a semicolon ';' at the end of the declaration
         if self.tokenizer.currentToken().value != ";":
             raise ValueError(f"Expected ';' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
         self.addCloseTag("varDec")
 
     def compileStatements(self):
@@ -544,18 +582,18 @@ class CompilationEngine:
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != "let":
             raise ValueError(f"Expected 'let' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Expecting a variable name (identifier)
         self.tokenizer.advance()
         if self.tokenizer.currentToken().token_type != TokenType.IDENTIFIER:
             raise ValueError(f"Expected variable name but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Check for array access (optional)
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value == "[":
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
             # Expecting an expression inside the brackets
             self.compileExpression()
 
@@ -563,14 +601,14 @@ class CompilationEngine:
             self.tokenizer.advance()
             if self.tokenizer.currentToken().value != "]":
                 raise ValueError(f"Expected ']' but got {self.tokenizer.currentToken().value}")
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
             self.tokenizer.advance()
         elif self.tokenizer.currentToken().value != "=":
             # If we are not accessing an array, we should be at the assignment operator
             raise ValueError(f"Expected '[' or '=' but got {self.tokenizer.currentToken().value}")
         
         # Now we should be at the assignment operator '='
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Expecting an expression after the '='
         self.compileExpression()
@@ -579,7 +617,7 @@ class CompilationEngine:
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != ";":
             raise ValueError(f"Expected ';' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
         self.addCloseTag("letStatement")
 
     def compileIf(self):
@@ -594,13 +632,13 @@ class CompilationEngine:
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != "if":
             raise ValueError(f"Expected 'if' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Expecting an opening parenthesis '('
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != "(":
             raise ValueError(f"Expected '(' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Expecting an expression inside the parentheses
         self.compileExpression()
@@ -609,13 +647,13 @@ class CompilationEngine:
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != ")":
             raise ValueError(f"Expected ')' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Expecting an opening brace '{' for the statements block
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != "{":
             raise ValueError(f"Expected '{{' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Compile the statements inside the 'if' block
         self.compileStatements()
@@ -624,17 +662,17 @@ class CompilationEngine:
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != "}":
             raise ValueError(f"Expected '}}' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Check for an optional 'else' clause
         if self.tokenizer.nextToken().value == "else":
             self.tokenizer.advance()
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
             # Expecting an opening brace '{' for the 'else' block
             self.tokenizer.advance()
             if self.tokenizer.currentToken().value != "{":
                 raise ValueError(f"Expected '{{' but got {self.tokenizer.currentToken().value}")
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
 
             # Compile the statements inside the 'else' block
             self.compileStatements()
@@ -643,7 +681,7 @@ class CompilationEngine:
             self.tokenizer.advance()
             if self.tokenizer.currentToken().value != "}":
                 raise ValueError(f"Expected '}}' but got {self.tokenizer.currentToken().value}")
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
 
         self.addCloseTag("ifStatement")
 
@@ -659,13 +697,13 @@ class CompilationEngine:
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != "while":
             raise ValueError(f"Expected 'while' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Expecting an opening parenthesis '('
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != "(":
             raise ValueError(f"Expected '(' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Expecting an expression inside the parentheses
         self.compileExpression()
@@ -674,13 +712,13 @@ class CompilationEngine:
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != ")":
             raise ValueError(f"Expected ')' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Expecting an opening brace '{' for the statements block
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != "{":
             raise ValueError(f"Expected '{{' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Compile the statements inside the 'while' block
         self.compileStatements()
@@ -689,7 +727,7 @@ class CompilationEngine:
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != "}":
             raise ValueError(f"Expected '}}' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         self.addCloseTag("whileStatement")    
 
@@ -705,20 +743,20 @@ class CompilationEngine:
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != "do":
             raise ValueError(f"Expected 'do' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Expecting a subroutine call
         self.tokenizer.advance()
         if self.tokenizer.currentToken().token_type != TokenType.IDENTIFIER:
             raise ValueError(f"Expected subroutine name but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
         
         # Check for subroutine call structure
         token = self.tokenizer.nextToken()
         if token.value == "(":
             # Subroutine call without class or variable name
             self.tokenizer.advance()
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
 
             # Compile the expression list
             self.compileExpressionList()
@@ -727,23 +765,23 @@ class CompilationEngine:
             self.tokenizer.advance()
             if self.tokenizer.currentToken().value != ")":
                 raise ValueError(f"Expected ')' but got {self.tokenizer.currentToken().value}")
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
         elif token.value == ".":
             # Subroutine call with class or variable name
             self.tokenizer.advance()
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
 
             # Expecting a subroutine name (identifier) after the dot
             self.tokenizer.advance()
             if self.tokenizer.currentToken().token_type != TokenType.IDENTIFIER:
                 raise ValueError(f"Expected subroutine name but got {self.tokenizer.currentToken().value}")
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
 
             # Expecting an opening parenthesis '(' for the expression list
             self.tokenizer.advance()
             if self.tokenizer.currentToken().value != "(":
                 raise ValueError(f"Expected '(' but got {self.tokenizer.currentToken().value}")
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
 
             # Compile the expression list
             self.compileExpressionList()
@@ -752,13 +790,13 @@ class CompilationEngine:
             self.tokenizer.advance()
             if self.tokenizer.currentToken().value != ")":
                 raise ValueError(f"Expected ')' but got {self.tokenizer.currentToken().value}")
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
 
         # Expecting a semicolon ';' at the end
         self.tokenizer.advance()
         if self.tokenizer.currentToken().value != ";":
             raise ValueError(f"Expected ';' but got {self.tokenizer.currentToken().value}")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         self.addCloseTag("doStatement")
 
@@ -774,7 +812,7 @@ class CompilationEngine:
             raise ValueError(f"Expected 'return' but got {self.tokenizer.currentToken().value}")
 
         self.addOpenTag("returnStatement")
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         # Expecting an expression after 'return' (optional)
         if self.tokenizer.nextToken().value != ";":
@@ -782,7 +820,7 @@ class CompilationEngine:
 
         # Expecting a semicolon ';' at the end
         self.tokenizer.advance()
-        self.addSimpleTag(self.tokenizer.currentToken())
+        self.addSimpleTag()
 
         self.addCloseTag("returnStatement")
 
@@ -799,7 +837,7 @@ class CompilationEngine:
         # Check for additional terms with operators (optional)
         while self.tokenizer.nextToken().value in self.ops:
             self.tokenizer.advance()
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
             # Advance to the next token which should be a term
             self.compileTerm()
         self.addCloseTag("expression")
@@ -820,15 +858,15 @@ class CompilationEngine:
         token = self.tokenizer.currentToken()
         if token.token_type == TokenType.INT_CONST:
             # Integer constant
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
         elif token.token_type == TokenType.STRING_CONST:
             # String constant
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
         elif token.value in {"true", "false", "null", "this"}:
             # Keyword constant
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
         elif token.value == "(":
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
             # Expression in parentheses
             self.compileExpression()
 
@@ -836,20 +874,20 @@ class CompilationEngine:
             self.tokenizer.advance()
             if self.tokenizer.currentToken().value != ")":
                 raise ValueError(f"Expected ')' but got {self.tokenizer.currentToken().value}")
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
         elif token.value in self.unary_ops:
             # Unary operation
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
             # Expecting a term after the unary operator
             self.compileTerm()
         elif token.token_type == TokenType.IDENTIFIER:
             # Variable name or subroutine call
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
             token = self.tokenizer.nextToken()
             if token.value == "[":
                 # Array access
                 self.tokenizer.advance()
-                self.addSimpleTag(self.tokenizer.currentToken())
+                self.addSimpleTag()
                 
                 # Expecting an expression inside the brackets
                 self.compileExpression()
@@ -858,23 +896,23 @@ class CompilationEngine:
                 self.tokenizer.advance()
                 if self.tokenizer.currentToken().value != "]":
                     raise ValueError(f"Expected ']' but got {self.tokenizer.currentToken().value}")
-                self.addSimpleTag(self.tokenizer.currentToken())
+                self.addSimpleTag()
             elif token.value == ".":
                 # Subroutine call with class or variable name
                 self.tokenizer.advance()
-                self.addSimpleTag(self.tokenizer.currentToken())
+                self.addSimpleTag()
 
                 # Expecting a subroutine name (identifier) after the dot
                 self.tokenizer.advance()
                 if self.tokenizer.currentToken().token_type != TokenType.IDENTIFIER:
                     raise ValueError(f"Expected subroutine name but got {self.tokenizer.currentToken().value}")
-                self.addSimpleTag(self.tokenizer.currentToken())
+                self.addSimpleTag()
 
                 # Expecting an opening parenthesis '(' for the expression list
                 self.tokenizer.advance()
                 if self.tokenizer.currentToken().value != "(":
                     raise ValueError(f"Expected '(' but got {self.tokenizer.currentToken().value}")
-                self.addSimpleTag(self.tokenizer.currentToken())
+                self.addSimpleTag()
 
                 # Compile the expression list
                 self.compileExpressionList()
@@ -883,11 +921,11 @@ class CompilationEngine:
                 self.tokenizer.advance()
                 if self.tokenizer.currentToken().value != ")":
                     raise ValueError(f"Expected ')' but got {self.tokenizer.currentToken().value}")
-                self.addSimpleTag(self.tokenizer.currentToken())
+                self.addSimpleTag()
             elif token.value == "(":
                 # Subroutine call without class or variable name
                 self.tokenizer.advance()
-                self.addSimpleTag(self.tokenizer.currentToken())
+                self.addSimpleTag()
 
                 # Compile the expression list
                 self.compileExpressionList()
@@ -896,7 +934,7 @@ class CompilationEngine:
                 self.tokenizer.advance()
                 if self.tokenizer.currentToken().value != ")":
                     raise ValueError(f"Expected ')' but got {self.tokenizer.currentToken().value}")
-                self.addSimpleTag(self.tokenizer.currentToken())
+                self.addSimpleTag()
         else:
             raise ValueError(f"Unexpected token in term: {token.value}")
         self.addCloseTag("term")
@@ -918,7 +956,7 @@ class CompilationEngine:
         # Check for additional expressions separated by commas
         while self.tokenizer.nextToken().value == ",":
             self.tokenizer.advance()
-            self.addSimpleTag(self.tokenizer.currentToken())
+            self.addSimpleTag()
             # Expecting another expression after the comma
             self.compileExpression()
 
@@ -958,4 +996,5 @@ if __name__ == "__main__":
     filepath = sys.argv[1] 
     JackAnalyzer(filepath).analyze()
 
+  
         
