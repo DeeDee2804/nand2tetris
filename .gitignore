@@ -3,3 +3,4 @@ tools/bin/*.dat
 .vscode/**
 **/__pycache__/**
 **/*.pyc
+11/*/*.vm

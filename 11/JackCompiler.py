@@ -107,15 +107,15 @@ class SymbolTable:
         """
         return self.symbols.get(name, {}).get("kind", VariableKind.NONE)
 
-    def typeOf(self, name: str) -> str|None:
+    def typeOf(self, name: str) -> str:
         """
         Returns the type of the variable with the given name in the current scope.
 
         :param name: The name of the variable
         :return: The type of the variable (as a string)
         """
-        return self.symbols.get(name, {}).get("type", None)
-        
+        return self.symbols.get(name, {}).get("type", "")
+
     def indexOf(self, name: str) -> int:
         """
         Returns the index of the variable with the given name in the current scope.
@@ -555,9 +555,6 @@ class CompilationEngine:
         if self.tokenizer.currentToken().value != ";":  
             raise ValueError(f"Expected ';' but got {self.tokenizer.currentToken().value}")
         
-        print(f"Symbol table for class {self.classname}:")
-        print(self.classTable)
-
     def compileSubroutine(self):
         """
         Compiles a subroutine from the Jack source code.
@@ -618,9 +615,6 @@ class CompilationEngine:
 
         # Compile the subroutine body
         self.compileSubroutineBody()
-
-        print(f"Symbol table for subroutine {self.curFuncName}:")
-        print(self.subRoutineTable)
 
     def compileParameterList(self) -> int:
         """
