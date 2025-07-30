@@ -448,7 +448,7 @@ class CompilationEngine:
         self.if_count = 0
         self.while_count = 0
 
-    def compile(self):
+    def run(self):
         """
         Compiles the Jack source code using the tokenizer.
         """
@@ -1338,7 +1338,7 @@ class CompilationEngine:
             numExpr += 1
         return numExpr
 
-class JackAnalyzer:
+class JackCompiler:
     """
     A class to analyze and compile Jack source code files.
     This class uses the JackTokenizer and CompilationEngine to process the source code.
@@ -1356,7 +1356,7 @@ class JackAnalyzer:
         else:
             self.files = [Path(inputpath)]
 
-    def analyze(self):
+    def compile(self):
         """
         Analyzes the Jack source code by compiling it.
         """
@@ -1365,11 +1365,11 @@ class JackAnalyzer:
                 raise ValueError(f"File {filepath} is not a Jack source code file.")
             tokenizer = JackTokenizer(filepath)
             engine = CompilationEngine(tokenizer, output_file=filepath.with_suffix(".vm"))
-            engine.compile()
+            engine.run()
 
 if __name__ == "__main__":
     # Example usage
     filepath = sys.argv[1] 
-    JackAnalyzer(filepath).analyze()
+    JackCompiler(filepath).compile()
 
         
